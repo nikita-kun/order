@@ -1,0 +1,322 @@
+<html>
+<head>
+	<title>Item sorting</title>
+</head>
+<body> 
+
+<div id='comparator' style='width:100%; height: 90%'>
+	<a href='#'><div id='A' style='padding: 30px; width:40%; height:80%; background-color:yellow; float:left;'></div></a>
+	<a href='#'><div id='B' style='padding: 30px; width:40%; height:80%; background-color:yellow; float:right'></div></a>
+<b style='position:fixed; bottom:0; right:0;' onclick='setConsoleVisible(true)'>Show console</b>
+</div>
+
+
+<div id='viewer' hidden style='top:0; left:0; right:0; bottom:0 ;width:100%; height: 100%; background-color: rgba(255,255,255,0.95);'>
+<h1 id="viewerTitle"></h1>
+<button id="viewerAddTag" onclick="addTag()">Add tag</button><hr>
+<span id='viewerSpan'>
+</span>
+<b style="position:fixed; bottom:0; right: 0;" href='#' onclick="closeViewer()">Close viewer</b>
+</div>
+
+<div id='console' style='position:fixed; top:0; left:0; right:0; bottom:0 ;width:100%; height: 100%; background-color: rgba(255,255,255,0.95);'>
+	<div id='data' style='height: 50%; width: 100%'>
+
+<textarea id='input' style='margin: 30px; width:40%; float: left; height: 100%;' onkeypress='updateEstimate()' onchange='updateEstimate()'>
+3
+2#tag
+5
+4
+1#comment</textarea>
+
+<textarea id='tags' hidden>Favourite</textarea>
+<textarea id='output' style='margin: 30px; width:40%; float: right; height: 100%;' ></textarea>
+<b id='viewOutput' style="position:fixed; bottom:30px; right: 0;" href='#' onclick="view('output')">View output</b>
+<b id='viewInput' style="position:fixed; bottom:120px; left: 0;" href='#' onclick="view('input')">View input</b>
+<b id='enterTags' style="position:fixed; bottom:90px; left: 0;" href='#' onclick="view('tags')">View tags</b>
+<b id='filterButton' style="position:fixed; bottom:60px; left: 0;" href='#' onclick="filterInput()">Filter input</b>
+<b id='filterButton2' style="position:fixed; bottom:30px; left: 0;" href='#' onclick="filterInput(true)">Filter comments</b>
+<b id='restartButton' style="position:fixed; bottom:0; left: 0;" href='#' onclick="sortRestart()"></b>
+<b style="position:fixed; bottom:0; right: 0;" href='#' onclick="setConsoleVisible(false)">Close console</b>
+	</div>
+</div>
+
+<script>
+
+var comparisons = 0;
+var currentList = [];
+var currentElement = '';
+var tags = listParse('tags');
+
+async function mergeSort (arr) {
+  if (arr.length < 2) return arr;
+  var mid = Math.floor(arr.length /2);
+  var subLeft = await mergeSort(arr.slice(0,mid));
+  var subRight = await mergeSort(arr.slice(mid));
+  return merge(subLeft, subRight); 
+}
+
+
+
+function updateEstimate(){
+	estimate = Math.floor(
+			document.getElementById('input').value.split('\n').length * 
+			Math.log(document.getElementById('input').value.split('\n').length)
+		);
+	document.getElementById('restartButton').innerHTML = 'Sort (comparisons~'+estimate+')'; 
+}
+
+function optionPresent(id){
+	option = currentList[id]
+	var presentation = ''
+	
+	switch (true){
+		case option.text.startsWith("https://") || 
+		option.text.startsWith("file://") || 
+		option.text.startsWith("/"): 
+			container = 'iframe'
+			if (option.text.toLowerCase().endsWith(".jpg"))
+				container = 'img'
+			presentation += '<div style="margin:10px;"><center ><a target="_blank" href="'
+				+option.text
+				+'">' 
+				+option.text
+				+'</a><br><i class="comment" id="comment_'
+				+id
+				+'">'
+				+option.comment
+				+'</i><'
+				+container
+				+' style="width:60%" src="'
+				+option.text
+				+'"></'
+				+container
+				+'></center></div>'; break;
+		default: 
+			presentation += '<div style="margin:10px;"><center><b>'
+				+option.text
+				+'</b><br><i id="comment_'
+				+id
+				+'" class="comment">'
+				+option.comment
+				+'</i></center></div>'; 
+		
+	}
+	
+	return presentation
+}
+
+function setOption(optionElementID, option){	
+	document.getElementById(optionElementID).innerHTML = optionPresent(option);
+}
+
+function filterInput(comments = false){
+	type = "Filtering by text."
+	if (comments){
+		type = "Filtering by comments and tags."
+	}
+	key = prompt(type + ' Enter necessary substring:');
+	if (!key)
+		return;
+		
+	currentList = listParse('input')
+	
+	for (i = 0; i<currentList.length; i++){
+		subject = currentList[i].text
+		if (comments)
+			subject = currentList[i].comment
+		if (subject.search(key) < 0)
+			delete currentList[i]
+	}
+	
+	currentList = currentList.flat();
+	document.getElementById('input').value = listStringify(currentList)
+	
+}
+
+
+function compare(a,b){
+	comparisons += 1;
+	console.log("compare",a,b);
+	setOption('A', a); setOption('B', b);
+	return new Promise(resolve => {
+		document.getElementById('A').onclick = function(){resolve(true)};
+		document.getElementById('B').onclick = function(){resolve(false)};
+		document.onkeydown = function(event){
+			switch (event.key){
+				case "ArrowLeft": resolve(true); break;
+				case "ArrowRight": resolve(false);
+			}
+		}
+  });
+}
+
+async function merge (a,b) {
+    var result = [];
+    while (a.length >0 && b.length >0){
+    	aSmaller = await compare(a[0],b[0]);
+        result.push(aSmaller? a.shift() : b.shift());
+    }
+    return result.concat(a.length? a : b);
+}
+
+function sortRestart(){
+	comparisons = 0;
+	startTime = Date.now();
+	document.getElementById('output').value = '';
+
+	setConsoleVisible(false);
+	setOptionsVisible(true);
+	
+	
+	currentList = listParse('input')
+	k = Object.keys(currentList)
+	
+	mergeSort(k).then(function(x){
+		result = 'Sorted in '
+			+comparisons
+			+' comparisons, '
+			+ Math.ceil((Date.now()-startTime)/(1000*60))
+			+ ' minutes';
+		alert(result);
+	
+		document.getElementById('output').value = listStringify(currentList, x)
+		setOptionsVisible(false);
+		setConsoleVisible(true);
+	});
+	
+}
+
+function setOptionsVisible(visible = true){
+	document.getElementById('A').hidden = !visible;
+	document.getElementById('B').hidden = !visible;
+}
+
+function setConsoleVisible(visible = true){
+	document.getElementById('console').hidden = !visible;
+	setComparatorVisible(!visible);
+}
+
+function setComparatorVisible(visible = true){
+	document.getElementById('comparator').hidden = !visible;
+}
+
+function remove(id){
+	currentList[id].removed = true
+	document.getElementById("option_"+id).remove();
+}
+
+function comment(id){
+	var comment = prompt("Enter comment:",currentList[id].comment)
+	if (!comment){
+		return
+	}
+	currentList[id].comment = comment
+	document.getElementById("comment_"+id).innerHTML = currentList[id].comment	
+}
+
+function tag(id, tag){
+	currentList[id].comment += "#"+tag
+	document.getElementById("comment_"+id).innerHTML += "#"+tag	
+}
+
+function listParse(element){
+	list = []
+	a = document.getElementById(element).value.split('\n');
+	for (i = 0; i<a.length; i++){
+		line = a[i].split('#');
+		list[i] = {"text":line.shift(),"comment":line.join("#")}
+	}
+	return list
+}
+
+function listStringify(list, key = null){
+	lines = []
+	for (i = 0; i<list.length; i++){
+		var x = i
+		if (key)
+			x = key[i]
+		if (list[x].removed)
+			continue;
+		line = list[x].text + (list[x].comment ? '#'+list[x].comment : '').replace('##', '#');
+		lines.push(line);
+	}
+	return lines.join('\n')
+}
+
+function view(element = 'input'){
+	setConsoleVisible(false)
+	setComparatorVisible(false)
+	document.getElementById('viewer').hidden = false;
+	document.getElementById('viewerTitle').innerHTML = element;
+	document.getElementById('viewerSpan').innerHTML = '';
+	
+	document.getElementById('viewerAddTag').hidden = (element != 'tags')
+	
+	comments = document.getElementsByClassName('comment')
+	while (comments.length){
+		comments[0].parentNode.removeChild(comments[0]);
+	}
+	
+	currentElement = element
+	currentList = listParse(element)
+	
+	for (i = 0; i<a.length; i++){
+		presentation = optionPresent(i)
+		removeButton = "<button onclick='remove("+i+")'>x</button>";
+		editButton = "<button onclick='comment("+i+")'>comment</button>";
+		tagButtons = "";
+		//tag buttons
+		for (t = 0; t<tags.length; t++){
+			if (tags[t].removed || currentElement == 'tags')
+				continue
+				tagButtons += "<button style='float:right' onclick='tag("
+					+i
+					+",\""
+					+tags[t].text
+					+"\")'>"
+					+tags[t].text
+					+"</button>";
+			
+		}
+		
+		document.getElementById('viewerSpan').innerHTML += '<div class="option" id="option_'
+			+i
+			+'">'
+			+removeButton
+			+editButton
+			+tagButtons
+			+presentation
+			+'<hr></div>';
+	}
+}
+
+function closeViewer(){
+	setConsoleVisible(true);
+	document.getElementById('viewer').hidden = true;
+	document.getElementById(currentElement).value = listStringify(currentList)
+	
+	if (currentElement == 'tags'){
+		tags = currentList
+	}
+	updateEstimate()
+	
+}
+
+function addTag(){
+	newTag = prompt("Enter a new tag:")
+	if (!newTag)
+		return;
+	currentList.push({text:newTag,comment:""})
+	document.getElementById('tags').value = listStringify(currentList)
+	tags = currentList
+	view('tags')
+}
+
+
+updateEstimate();
+
+</script>
+
+</body>
+</html>
