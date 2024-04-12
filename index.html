@@ -699,7 +699,7 @@
             function inputFromUrl(url, viewOnUpdate = true) {
                 const req = new XMLHttpRequest();
                 req.addEventListener("load", function (event) {
-                    if (event.srcElement.statusText === "OK") {
+                    if (event.srcElement.statusText === "OK" || event.srcElement.status == 200) {
                         appendInput(event.srcElement.responseText.trim());
                         if (viewOnUpdate)
                             onUpdate();
