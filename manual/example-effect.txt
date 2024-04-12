@@ -1,0 +1,10 @@
+https://images.unsplash.com/photo-1514722576538-e8501559835e#.jpg
+https://images.unsplash.com/photo-1514722576538-e8501559835e#.jpg`flip
+https://images.unsplash.com/photo-1514722576538-e8501559835e#.jpg`style=filter:saturate(0)
+https://images.unsplash.com/photo-1514722576538-e8501559835e#.jpg`style=filter:saturate(3.0)
+https://images.unsplash.com/photo-1514722576538-e8501559835e#.jpg`style=filter:saturate(0.5) contrast(0.5)
+https://images.unsplash.com/photo-1514722576538-e8501559835e#.jpg`spectrum
+Quick brown fox jumps over a lazy dog
+Quick brown fox jumps over a lazy dog`rewrite?"a lazy dog"=Math.random()+" meters"
+Quick brown fox jumps over a lazy dog`rewrite?"a lazy dog"=Math.random()+" meters"
+Quick brown fox jumps over a lazy dog`rewrite?"a lazy dog"=Math.random()+" meters"

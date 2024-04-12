@@ -1,0 +1,7 @@
+/order/manual
+https://en.wikipedia.org/wiki/History_of_architecture
+https://en.wikipedia.org/wiki/Information_theory
+https://www.desmos.com/calculator/dxkknajdqb?lang=en-US
+https://maps.stamen.com/watercolor/#3/47.81/4.83
+https://embed.windy.com/embed.html?zoom=3&level=surface&overlay=temp&product=ecmwf
+https://eyes.nasa.gov/apps/solar-system/#/home?rate=259200
