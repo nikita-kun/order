@@ -1,322 +1,1440 @@
-<html>
-<head>
-	<title>Item sorting</title>
-</head>
-<body> 
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <title>Order</title>
+        <meta name="description" content="Order. Presentation of media items: images, websites, text, documents">
+        
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1"><!-- content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0"-->
+        <style>
+            body {
+                touch-action: manipulation;
+                position: relative;
+                --gallerySize: 5;
+                font-size: 20pt;
+                margin: 0;
+                padding: 0;
+            }
+            ::-webkit-scrollbar{
+                display: none;
+            }
+            .verticalFlex{
+                flex-flow: column;
+                flex-direction: column;
+                display: flex;
+                height: 100vh;
+            }
+            .verticalFlex > .option{
+                height: calc(99vh / var(--gallerySize));
+            }
+            .header {
+                overflow: hidden;
+                height: 200px;
+                width: 1%;
+                z-index: -2;
+            }
+            .viewerMenu {
+                position: fixed;
+                background: white;
+                bottom: 20pt;
+                padding: 20px;
+                margin: 0;
+                z-index: 1;
+                right: 0;
+                list-style-type: none;
+                text-align: center;
+                opacity: 0.9;
+            }
+            .modeButton{
+                padding: 10px;
+            }
+            .snap{
+                scroll-snap-align: start;
+            }
+            .galleryFlex{
+                flex-flow: row;
+                flex-wrap: wrap;
+                display: flex;
+                height: 100vh;
+            }
+            .galleryFlex > .option{
+                overflow: hidden;
+                width: calc(99vw / var(--gallerySize));
+            }
+            .galleryFlex .container{
+                height: calc(99 * 9vw  / 16 / var(--gallerySize));
+                min-height: calc(100% * 9  / 16 / var(--gallerySize));
+            }
+            .contentOnly .optionButtons{
+                display: none;
+            }
+            .contentOnly .optionDetails{
+                display: none;
+            }
+            .horizontalFlex{
+                flex-direction: row;
+                flex-flow: row;
+                display: flex;
+                height: 100%;
+            }
+            .horizontalFlex > .option{
+                overflow: hidden;
+                width: calc(100vw / var(--gallerySize) + 1px);
+                min-width: calc(100vw / var(--gallerySize) + 1px);
+                max-width: calc(100vw / var(--gallerySize) + 1px);
+            }
+            .cornerButton {
+                position: fixed;
+                bottom: 0;
+                right: 0;
+                height: 20pt;
+                width: 20pt;
+                z-index: 1;
+            }
+            .cornerLeft{
+                left: 0;
+            }
+            .cornerButton.cornerLeft{
+                left: 0;
+                transform: matrix(-1, 0, 0, 1, 0, 0);
+            }
+            .cornerButton.cornerTop{
+                top: 0;
+                transform: matrix(1, 0, 0, -1, 0, 0);
+            }
+            .cornerButton.cornerTopLeft{
+                top: 0;
+                left: 0;
+                transform: matrix(-1, 0, 0, -1, 0, 0);
+            }
+            .option .cornerButton {
+                position: absolute;
+                right: 0px;
+                bottom: 0px;
+                overflow: hidden;
+                height: 20pt;
+                width: 20pt;
+            }
+            .nested {
+                transform: translateX(-20px)
+            }
+            .gradientDark{
+                background: red;
+                background: linear-gradient(135deg, rgba(0,0,0,0) 50%, rgba(255,255,255,1) 100%);
+            }
+            .gradientLight{
+                background: red;
+                background: linear-gradient(135deg, rgba(255,255,255,0) 50%, rgba(0,0,0,1) 100%);
+            }
+            .cornerButton:hover {
+                backdrop-filter: invert(1);
+            }
+            .option{
+                flex: 0 0 auto;
+                display: flex;
+                position: relative;
+                flex-flow: column;
+                max-height: 100vh;
+                user-select: none;
+            }
+            .tint {
+                background-color: #eee;
+            }
+            .light {
+                background: white;
+            }
+            .dark {
+                background: black;
+            }
+            .optionContents{
+                display: contents;
+            }
+            .optionButtons{
+                display: flex;
+                padding: 8pt;
+                flex-direction: row;
+                flex-wrap: wrap;
+                justify-content: flex-start;
+            }
+            .optionPlaintext{
+                margin: 10px;
+                text-align: center;
+            }
+            #slideshow .optionPlaintext{
+                color: white;
+                background: black;
+                overflow: hidden;
+            }
+            #slide{
+                overflow: hidden;
+                transition: opacity 3s;
+            }
+            #slide > object {
+                cursor: none;
+                width: 100%;
+            }
+            #curtain{
+                z-index: 10;
+                pointer-events: none;
+            }
+            .optionDetails{
+                text-align: center;
+                flex: 0 1 auto;
+            }
+            img.container{
+                overflow: hidden;
+                flex: 1 1 auto;
+            }
+            img.container.fullscreen{
+                background: white;
+            }
+            video.container{
+                overflow: auto;
+                flex: 1 1 auto;
+                width: 100%;
+            }
+            object.container{
+                cursor: none;
+                height: 100vh;
+                flex: 1 1 auto;
+                object-fit: contain;
+                background: white;
+            }
+            iframe.container{
+                cursor: none;
+                height: 100vh;
+                width: 100%;
+                flex: 1 1 auto;
+                object-fit: contain;
+                background: white;
+                border: none;
+            }
+            .container{
+                object-fit: contain;
+                opacity: 0.001%;
+                transition: opacity 3s;
+            }
+            .container.fullscreen{
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100vw;
+                height: 100vh;
+                z-index: 2;
+            }
+            object:hover{
+                cursor: auto;
+            }
+            #containerStopButton{
+                z-index: 5;
+            }
+            .fullwidth{
+                position: absolute;
+                top: 0;
+                left: 0;
+                width: 100%;
+            }
+            .fullheight{
+                height: 100vh;
+            }
+            .absolute{
+                position: absolute;
+                top: 0;
+                left: 0;
+            }
+            .mainMenu{
+                bottom:0;
+                left: 0;
+                max-height: 50%;
+                overflow: scroll;
+                margin: 0;
+                display: flex;
+                flex-wrap: wrap;
+                justify-content: center;
+                padding: 0;
+            }
+            .mainMenu>li{
+                font-size: 12pt;
+                display: inline-block;
+                margin: 10px;
+                border: 1px solid black;
+                cursor: pointer;
+                padding: 10px;
+                user-select: none !important;
+            }
+            #slideshow{
+                z-index: 3;
+            }
+            #slideshowMenu{
+                position: fixed;
+                width: fit-content;
+                bottom: 0;
+                right: 0;
+                margin-top: 75px;
+                list-style-type: none;
+                text-align: center;
+                padding: 20px;
+                opacity: 0.9;
+            }
+            #comparator{
+                z-index: 0;
+                display: flex;
+                align-content: space-between;
+                justify-content: space-around;
+                align-items: center;
+            }
+            #viewer{
+                z-index: 2;
+                scroll-snap-type: both mandatory;
+                overflow: hidden;
+                overflow-y: scroll;
+                overflow-x: scroll;
+                min-height: 100vh;
+                width: 100vw;
+            }
+            #viewerTitle{
+                margin: 0;
+            }
+            #viewerOptions{
+                background: white;
+            }
+            #viewerInner{
+                position: relative;
+                z-index: 1;
+            }
+            #console{
+                height: 100vh;
+                flex-direction: column;
+                display: flex;
+                z-index: 1;
+            }
+            .justify{
+                display: flex;
+                justify-content: center;
+                align-items: center;
+            }
+            .comparatorChoice {
+                padding: 3vmin;
+                width: 40%;
+                height: 90vmin;
+                color: black;
+                user-select: none !important;
+                display: flex;
+                justify-content: center;
+                overflow: hidden;
+            }
+            .left {
+                float: left;
+            }
+            .right {
+                float: right;
+            }
+            .list {
+                padding: 30px;
+                margin: 15px;
+                margin-bottom: 5px;
+                width: 100%;
+            }
+            #data{
+                flex-grow: 1;
+                display: flex;
+                width: 100%;
+            }
+            [hidden] {
+                display: none !important;
+            }
+            @keyframes spectrum {
+                0% {
+                    filter: invert(1) hue-rotate(90deg);
+                }
+                100% {
+                    filter: invert(1) hue-rotate(450deg);
+                }
+            }
+            .spectrum {
+                animation: spectrum 35s linear infinite;
+            }
+            .flip {
+                transform: matrix(-1, 0, 0, 1, 0, 0);
+            }
+        </style>
+    </head>
+    <body> 
 
-<div id='comparator' style='width:100%; height: 90%'>
-	<a href='#'><div id='A' style='padding: 30px; width:40%; height:80%; background-color:yellow; float:left;'></div></a>
-	<a href='#'><div id='B' style='padding: 30px; width:40%; height:80%; background-color:yellow; float:right'></div></a>
-<b style='position:fixed; bottom:0; right:0;' onclick='setConsoleVisible(true)'>Show console</b>
-</div>
+        <div id='comparator' class='fullwidth fullheight light'>
+            <div id='A' class='option comparatorChoice tint left'></div>
+            <div id='B' class='option comparatorChoice tint right'></div>
+            <div class="cornerButton gradientLight" alt="Show console" onclick='setConsoleVisible(true)'></div>
+        </div>
 
+        <div id='viewer' class='absolute light' hidden>
+            <div id='viewerInner'>
+                <ul id="viewerMenu" class="viewerMenu" hidden>
+                    <h2 id="viewerTitle"></h2>
+                    <li>
+                        <input id='gallerySize' type='range' min=1 max=10 step=1 value=5 onchange="setGallerySize(this.value)"/>
+                        <b class='modeButton' onclick="setViewMode('horizontal')"><svg  viewBox="-5 0 100 100" width="15px" height="15px"><path d="m5 165v-160" stroke="#000" stroke-width="9"/><path d="m45 165v-160" stroke="#000" stroke-width="9"/><path d="m85 165v-160" stroke="#000" stroke-width="9"/><path d="m125 165v-160" stroke="#000" stroke-width="9"/></svg></b>
+                        <b class='modeButton' onclick="setViewMode('vertical')"><svg style="transform: rotate(90deg);" viewBox="0 20 100 100" width="15px" height="15px"><path d="m5 165v-160" stroke="#000" stroke-width="9"/><path d="m45 165v-160" stroke="#000" stroke-width="9"/><path d="m85 165v-160" stroke="#000" stroke-width="9"/><path d="m125 165v-160" stroke="#000" stroke-width="9"/></svg></b>
+                        <b class='modeButton' onclick="setViewMode('gallery')"><svg width="15px" height="15px" viewBox="-.5 -.5 171 171"><g pointer-events="all" stroke="#000"><rect width="70" height="70"/><rect x="100" width="70" height="70"/><rect y="100" width="70" height="70"/><rect x="100" y="100" width="70" height="70"/></g></svg></b>
+                    </li>
+                    <li onclick="setContentOnlyView()">Details</li>
+                    <li onclick="window.open(orderUrl, '_blank')">Duplicate window</li>
+                    <li id="viewerAddTag" onclick="addTag()">Add tag</li>
+                    <li id="viewerImportTags" onclick="importTags()">Import tags</li>
+                    <li onclick="viewerFullscreenToggle()">Fullscreen</li>
+                    <li onclick="fadeCallback(slideshow); viewerFullscreenToggle(true);">Slideshow</li>
+                    <li onclick="closeViewer();">Main menu</li>
+                </ul>
 
-<div id='viewer' hidden style='top:0; left:0; right:0; bottom:0 ;width:100%; height: 100%; background-color: rgba(255,255,255,0.95);'>
-<h1 id="viewerTitle"></h1>
-<button id="viewerAddTag" onclick="addTag()">Add tag</button><hr>
-<span id='viewerSpan'>
-</span>
-<b style="position:fixed; bottom:0; right: 0;" href='#' onclick="closeViewer()">Close viewer</b>
-</div>
+                <div id='viewerOptions' class='horizontalFlex'></div>
+                <div id='viewerStartSlideshowButton' class="cornerButton cornerLeft gradientLight" alt="Start slideshow" onclick="fadeCallback(slideshow); viewerFullscreenToggle(true);"></div>
+                <div id='viewerMenuButton' class="cornerButton gradientLight" alt="Viewer menu" onclick='viewerMenu()'></div>
+            </div>
+        </div>
 
-<div id='console' style='position:fixed; top:0; left:0; right:0; bottom:0 ;width:100%; height: 100%; background-color: rgba(255,255,255,0.95);'>
-	<div id='data' style='height: 50%; width: 100%'>
+        <div id="containerStopButton" class="cornerButton gradientDark cornerTopLeft" onclick="containerFullscreenStop()" alt="Stop fullscreen" hidden></div>
 
-<textarea id='input' style='margin: 30px; width:40%; float: left; height: 100%;' onkeypress='updateEstimate()' onchange='updateEstimate()'>
-3
-2#tag
-5
-4
-1#comment</textarea>
+        <div id='curtain' class='fullwidth fullheight dark'></div>
+        
+        <div id='slideshow' class='fullwidth fullheight dark' hidden>
+            <div id='slide' class='option fullheight justify'></div>
+            <ul id='slideshowMenu' class='light' hidden>
+                <li onclick="slideshow('input', currentShowId + 1)">Next slide</li>
+                <li onclick="slideshow('input', -1)">Previous slide</li>
+                <li onclick="slideshowMenu(true)">Pause slideshow</li>
+                <li><a style="unset:all" onclick="window.open(orderUrl, '_blank')">Duplicate window</a></li>
+                <li onclick="slideshowMenu(); slideshowStop();">Main menu</li>
+                <li onclick="slideshowMenu(); slideshowStop(view);">Viewer</li>
+            </ul>
+            <div class="cornerButton gradientDark cornerTopLeft" onclick="slideshowStop(view)" onmousewheel="slideshowScroll(event)" onwheel="slideshowScroll(event)" alt="Stop slideshow and go to viewer"></div>
+            <div id="slideshowMenuButton" class="cornerButton gradientDark" alt="Slideshow menu" onmouseenter="slideshowMenu()" onclick="slideshowMenu()"></div>
+        </div>
 
-<textarea id='tags' hidden>Favourite</textarea>
-<textarea id='output' style='margin: 30px; width:40%; float: right; height: 100%;' ></textarea>
-<b id='viewOutput' style="position:fixed; bottom:30px; right: 0;" href='#' onclick="view('output')">View output</b>
-<b id='viewInput' style="position:fixed; bottom:120px; left: 0;" href='#' onclick="view('input')">View input</b>
-<b id='enterTags' style="position:fixed; bottom:90px; left: 0;" href='#' onclick="view('tags')">View tags</b>
-<b id='filterButton' style="position:fixed; bottom:60px; left: 0;" href='#' onclick="filterInput()">Filter input</b>
-<b id='filterButton2' style="position:fixed; bottom:30px; left: 0;" href='#' onclick="filterInput(true)">Filter comments</b>
-<b id='restartButton' style="position:fixed; bottom:0; left: 0;" href='#' onclick="sortRestart()"></b>
-<b style="position:fixed; bottom:0; right: 0;" href='#' onclick="setConsoleVisible(false)">Close console</b>
-	</div>
-</div>
+        <div id='console' class='fullwidth fullheight light'>
+            <div id='data'>
+                <textarea id='input' class='list left' wrap='off' onkeypress='updateEstimate()' onchange='updateEstimate()' ondblclick='this.wrap = (this.wrap === "soft" ? "off" : "soft")' placeholder='Input'></textarea>
+                <textarea id='tags' hidden>Favorite</textarea>
+                <textarea id='output' class='list right' wrap='off' ondblclick='this.wrap = (this.wrap === "soft" ? "off" : "soft")' placeholder='Output' hidden></textarea>
+                <div id='hideConsoleButton' class="cornerButton gradientLight" alt="Hide console" onclick="setConsoleVisible(false)" hidden></div>
+            </div>
 
-<script>
+            <ul class="mainMenu">
+                <li onclick="view('input')">View input</li>
+                <li onclick="window.open('#input=' + encodeURIComponent(document.getElementById('input').value), '_blank')">Duplicate input</li>
+                <li id='viewOutput' onclick="view('output')">View output</li>
+                <li onclick="view('tags')">View tags</li>
+                <li onclick="files.click()">Load files</li>
+                <li onclick="listFile.click()">Load list</li>
+                <li onclick="downloadInput()">Save list</li>
+                <li onclick="filterInput(false)">Filter input</li>
+                <li onclick="filterInput(true)">Filter comments</li>
+                <li onclick="addToInput(true)">Prepend</li>
+                <li onclick="addToInput()">Append</li>
+                <li onclick="replaceInput()">Replace</li>
+                <li onclick="excludeInput()">Exclude</li>
+                <li onclick="uniqueInput()">Unique</li>
+                <li onclick="lexicInput()">Lexic order</li>
+                <li onclick="shuffleInput()">Shuffle</li>
+                <li onclick="fadeCallback(slideshow); viewerFullscreenToggle(true);">Slideshow</li>
+                <li id="restartButton" onclick="sortStart()"></li>
+                <input hidden id="files" type="file" multiple/>
+                <input hidden id="list" type="file"/>
+            </ul>
+        </div>
+        <script>
+            var params, comparisons, tags;
+            var currentList, currentElement, currentShowId , currentSlideDelay;
+            var slideshowHistory, slideshowTimeoutId, sortStartTime;
+            var visibilityObserver;
+            
+            var orderUrl = window.location.href;
+            var files = document.getElementById("files");
+            var listFile = document.getElementById("list");
+            
+            window.addEventListener('message', (event) => {
+                if (event.origin !== this.window.origin)
+                    return;
+                if (event.data.dataOrderParams) {
+                    orderUrl = "?" + "#" + event.data.dataOrderParams;
+                    onLoad();
+                }
+            });
 
-var comparisons = 0;
-var currentList = [];
-var currentElement = '';
-var tags = listParse('tags');
+            window.addEventListener('load', onLoad);
+            document.addEventListener("fullscreenchange", fullscreenChanged);
+            addHorizontalViewerScroller('viewerMenuButton');
+            addHorizontalViewerScroller('viewerStartSlideshowButton');
 
-async function mergeSort (arr) {
-  if (arr.length < 2) return arr;
-  var mid = Math.floor(arr.length /2);
-  var subLeft = await mergeSort(arr.slice(0,mid));
-  var subRight = await mergeSort(arr.slice(mid));
-  return merge(subLeft, subRight); 
-}
+            files.onchange = function (e) {
+                var fileInput = [];
+                for (var i = 0; i < e.target.files.length; i++) {
+                    var file = e.target.files[i];
+                    var fileUrl = URL.createObjectURL(file);
+                    fileInput.push(fileUrl + '`filename=' + file.name);
+                }
+                appendInput(fileInput.join("\n"));
+                onUpdate();
+            };
+            
+            listFile.onchange = function (e) {
+                inputFromUrl(URL.createObjectURL(e.target.files[0]), false);
+            };
 
+            try {
+                visibilityObserver = new IntersectionObserver(function (entries) {
+                    entries.forEach(lazyLoad);
+                }, {threshold: [0]});
+            } catch (e) {
+            }
 
+            function reset() {
+                params = {
+                    "title": false,
+                    "input": false,
+                    "url": [],
+                    "slideshowShuffle": 1,
+                    "slideshowDelay": 30,
+                    "slideshowPreTransitionDelay": 5,
+                    "slideshowStart": false,
+                    "gallerySize": 2,
+                    "viewMode": "gallery",
+                    "contentOnly": true,
+                    "viewStart": false,
+                    "sortStart": false,
+                    "filterInput": false,
+                    "filterComment": false,
+                    "shuffleInput": false,
+                    "uniqueInput": false,
+                    "lexicInput": false,
+                    "excludeInput": [],
+                    "appendToInput": [],
+                    "containerShowDelay": 1,
+                    "nested": false
+                };
 
-function updateEstimate(){
-	estimate = Math.floor(
-			document.getElementById('input').value.split('\n').length * 
-			Math.log(document.getElementById('input').value.split('\n').length)
-		);
-	document.getElementById('restartButton').innerHTML = 'Sort (comparisons~'+estimate+')'; 
-}
+                comparisons = 0;
+                currentList = [];
+                currentElement = '';
+                currentShowId = undefined;
+                currentSlideDelay = undefined;
+                slideshowHistory = [];
+                tags = listParse('tags');
+                clearTimeout(typeof slideshowTimeoutId !== 'undefined' ? slideshowTimeoutId : null);
+                slideshowTimeoutId = 0;
+            }
 
-function optionPresent(id){
-	option = currentList[id]
-	var presentation = ''
-	
-	switch (true){
-		case option.text.startsWith("https://") || 
-		option.text.startsWith("file://") || 
-		option.text.startsWith("/"): 
-			container = 'iframe'
-			if (option.text.toLowerCase().endsWith(".jpg"))
-				container = 'img'
-			presentation += '<div style="margin:10px;"><center ><a target="_blank" href="'
-				+option.text
-				+'">' 
-				+option.text
-				+'</a><br><i class="comment" id="comment_'
-				+id
-				+'">'
-				+option.comment
-				+'</i><'
-				+container
-				+' style="width:60%" src="'
-				+option.text
-				+'"></'
-				+container
-				+'></center></div>'; break;
-		default: 
-			presentation += '<div style="margin:10px;"><center><b>'
-				+option.text
-				+'</b><br><i id="comment_'
-				+id
-				+'" class="comment">'
-				+option.comment
-				+'</i></center></div>'; 
-		
-	}
-	
-	return presentation
-}
+            function fadeIn(seconds = 1) {
+                document.getElementById('curtain').style.transition = `opacity ${seconds}s cubic-bezier(0.55, 0.06, 0.68, 0.19)`;
+                document.getElementById('curtain').style.opacity = 0;
+            }
 
-function setOption(optionElementID, option){	
-	document.getElementById(optionElementID).innerHTML = optionPresent(option);
-}
+            function fadeOut(seconds = 1) {
+                document.getElementById('curtain').style.transition = `opacity ${seconds}s cubic-bezier(0.55, 0.06, 0.68, 0.19)`;
+                document.getElementById('curtain').style.opacity = 1;
+            }
 
-function filterInput(comments = false){
-	type = "Filtering by text."
-	if (comments){
-		type = "Filtering by comments and tags."
-	}
-	key = prompt(type + ' Enter necessary substring:');
-	if (!key)
-		return;
-		
-	currentList = listParse('input')
-	
-	for (i = 0; i<currentList.length; i++){
-		subject = currentList[i].text
-		if (comments)
-			subject = currentList[i].comment
-		if (subject.search(key) < 0)
-			delete currentList[i]
-	}
-	
-	currentList = currentList.flat();
-	document.getElementById('input').value = listStringify(currentList)
-	
-}
+            function fadeCallback(callback, secondsOut = 1, secondsIn = 1, secondsIdle = 2) {
+                fadeOut(secondsOut);
+                setTimeout(callback, (secondsOut + secondsIdle / 2) * 1000);
+                setTimeout(fadeIn, (secondsOut + secondsIn + secondsIdle) * 1000);
+            }
 
+            function horizontalViewScroll(event) {
+                event.preventDefault();
+                const scrollAmount = event.deltaY || event.wheelDelta;
+                document.getElementById("viewer").scrollBy({
+                    left: window.innerWidth / params.gallerySize * Math.sign(scrollAmount) / 1.5,
+                    behavior: 'smooth'
+                });
+            }
+            
+            function addHorizontalViewerScroller(id) {
+                var element = document.getElementById(id);
+                element.addEventListener("wheel", horizontalViewScroll);
+                element.addEventListener("mousewheel", horizontalViewScroll);
+                element.addEventListener("DOMMouseScroll", horizontalViewScroll);
+            }
+            
+            function optionPresent(id, details = true) {
+                var containerMap = {
+                    "pdf": "object",
+                    "jpg": "img",
+                    "png": "img",
+                    "mov": "video",
+                    "mp4": "video",
+                    "m4v": "video",
+                    "wmv": "video",
+                    "webp": "video",
+                    "mp3": "audio",
+                    "ogg": "audio",
+                    "wav": "audio"
+                };
 
-function compare(a,b){
-	comparisons += 1;
-	console.log("compare",a,b);
-	setOption('A', a); setOption('B', b);
-	return new Promise(resolve => {
-		document.getElementById('A').onclick = function(){resolve(true)};
-		document.getElementById('B').onclick = function(){resolve(false)};
-		document.onkeydown = function(event){
-			switch (event.key){
-				case "ArrowLeft": resolve(true); break;
-				case "ArrowRight": resolve(false);
-			}
-		}
-  });
-}
+                var option = currentList[id];
+                option.textReplaced = option.text;
+                var presentation = '';
+                var style = '';
+                var imgArgs = '';
+                var autoplayArgs = '';
+                var spectrum = false;
+                var flip = false;
+                var classes = ['container'];
+                var container;
+                var dataSrc = '';
+                var dataOrderParams = '';
+                var text = '';
+                var filename = '';
+                var extension = '';
 
-async function merge (a,b) {
-    var result = [];
-    while (a.length >0 && b.length >0){
-    	aSmaller = await compare(a[0],b[0]);
-        result.push(aSmaller? a.shift() : b.shift());
-    }
-    return result.concat(a.length? a : b);
-}
+                for (var i in option.tags) {
+                    switch (true) {
+                        case option.tags[i].startsWith('container='):
+                            container = option.tags[i].split('=').pop();
+                            break;
+                        case option.tags[i].startsWith('style='):
+                            style = option.tags[i].split('=').pop();
+                            break;
+                        case option.tags[i].startsWith('filename='):
+                            filename = option.tags[i].split('=').pop();
+                            break;
+                        case option.tags[i].startsWith('spectrum'):
+                            spectrum = true;
+                            break;
+                        case option.tags[i].startsWith('flip'):
+                            flip = true;
+                            break;
+                        case option.tags[i].startsWith('randflip'):
+                            flip = Math.random() > 0.5;
+                            break;
+                        case option.tags[i].startsWith('rewrite'):
+                            option.tags[i].replace(/[?&]+([^=&]+)=([^&]*)/gi, function (m, key, value) {
+                                option.textReplaced = option.textReplaced.replace(eval(key), eval(value));
+                            });
+                            break;
+                        default:
+                    }
+                }
 
-function sortRestart(){
-	comparisons = 0;
-	startTime = Date.now();
-	document.getElementById('output').value = '';
+                switch (true) {
+                    case option.text.startsWith("https://"):
+                    case option.text.startsWith("blob:"):
+                    case option.text.startsWith("file://"):
+                    case option.text.startsWith("content://"):
+                    case option.text.startsWith("http://"):
+                    case option.text.startsWith("/"):
+                    case option.text.startsWith("#"):
+                        try {
+                            text = ((new URL(option.text)).hostname);
+                        } catch (e) {
+                            text = option.textReplaced;
+                        }
 
-	setConsoleVisible(false);
-	setOptionsVisible(true);
-	
-	
-	currentList = listParse('input')
-	k = Object.keys(currentList)
-	
-	mergeSort(k).then(function(x){
-		result = 'Sorted in '
-			+comparisons
-			+' comparisons, '
-			+ Math.ceil((Date.now()-startTime)/(1000*60))
-			+ ' minutes';
-		alert(result);
-	
-		document.getElementById('output').value = listStringify(currentList, x)
-		setOptionsVisible(false);
-		setConsoleVisible(true);
-	});
-	
-}
+                        if (option.text.startsWith("#"))
+                            text = "#";
 
-function setOptionsVisible(visible = true){
-	document.getElementById('A').hidden = !visible;
-	document.getElementById('B').hidden = !visible;
-}
+                        if (!container){
+                            extension = filename ? filename.split(".").pop().toLowerCase() : option.textReplaced.split(".").pop().toLowerCase();
+                            container = containerMap[extension] ? containerMap[extension] : 'object';
+                        }
 
-function setConsoleVisible(visible = true){
-	document.getElementById('console').hidden = !visible;
-	setComparatorVisible(!visible);
-}
+                        if (details)
+                            presentation = `<div class="optionDetails tint">
+                                <a target="_blank" rel="noreferrer" href="${option.textReplaced}">${text}</a><br>
+                                <i class="comment" id="comment_${id}">${option.comment}</i><br>
+                            </div>`;
+                        
+                        if (container === 'img') 
+                            imgArgs = `onclick="containerFullscreenStop()" ondblclick="containerFullscreen(${id})"`;
+                        
+                        if (container !== 'audio')
+                            autoplayArgs = 'autoplay';
+                        
+                        if (spectrum)
+                            classes.push('spectrum');
+                        
+                        if (flip)
+                            classes.push('flip');
+                        
+                        if (text === "#"){
+                            dataSrc = "?";
+                            dataOrderParams = `data-order-params="${option.textReplaced.slice(option.textReplaced.indexOf('#') + 1)}"`;
+                        } else {
+                            dataSrc = option.textReplaced;
+                        }
+                        
+                        presentation += `<${container} 
+                            id="container_${id}" 
+                            num="${id}" 
+                            ${imgArgs} 
+                            ${autoplayArgs} 
+                            allowfullscreen controls credentialless 
+                            sandbox="allow-same-origin allow-scripts allow-forms" 
+                            frameBorder="0" 
+                            class="${classes.join(' ')}" 
+                            allow="autoplay" 
+                            style="${style}" 
+                            data-src="${dataSrc}" ${dataOrderParams}>
+                        </${container}>`;
+                        break;
+                        
+                    default:
+                        presentation += `<div class="optionPlaintext tint">
+                            <b>${option.textReplaced}</b><br>
+                            <i id="comment_${id}" class="comment">${option.comment}</i>
+                        </div>`;
+                }
 
-function setComparatorVisible(visible = true){
-	document.getElementById('comparator').hidden = !visible;
-}
+                return presentation;
+            }
 
-function remove(id){
-	currentList[id].removed = true
-	document.getElementById("option_"+id).remove();
-}
+            function optionUpdate(id) {
+                document.getElementById("comment_" + id).innerHTML += "`" + tag;
+                document.getElementById("option_" + id).querySelectorAll(".optionDetails,.optionPlaintext,.container").forEach((x) => {
+                    x.remove();
+                });
+                document.getElementById("option_" + id).querySelector(".optionContents").innerHTML += optionPresent(id);
+                observeContainers();
+            }
 
-function comment(id){
-	var comment = prompt("Enter comment:",currentList[id].comment)
-	if (!comment){
-		return
-	}
-	currentList[id].comment = comment
-	document.getElementById("comment_"+id).innerHTML = currentList[id].comment	
-}
+            function inputFromUrl(url, viewOnUpdate = true) {
+                const req = new XMLHttpRequest();
+                req.addEventListener("load", function (event) {
+                    if (event.srcElement.statusText === "OK") {
+                        appendInput(event.srcElement.responseText.trim());
+                        if (viewOnUpdate)
+                            onUpdate();
+                    }
+                });
+                req.open("GET", url.startsWith('blob') || url.startsWith('file') || url.startsWith('content') ? url : url + "?" + Math.random());
+                req.send();
+            }
 
-function tag(id, tag){
-	currentList[id].comment += "#"+tag
-	document.getElementById("comment_"+id).innerHTML += "#"+tag	
-}
+            function setInput(input) {
+                document.getElementById("input").value = input;
+            }
 
-function listParse(element){
-	list = []
-	a = document.getElementById(element).value.split('\n');
-	for (i = 0; i<a.length; i++){
-		line = a[i].split('#');
-		list[i] = {"text":line.shift(),"comment":line.join("#")}
-	}
-	return list
-}
+            function appendInput(input) {
+                document.getElementById("input").value = document.getElementById("input").value ? document.getElementById("input").value + "\n" + input : input;
+            }
 
-function listStringify(list, key = null){
-	lines = []
-	for (i = 0; i<list.length; i++){
-		var x = i
-		if (key)
-			x = key[i]
-		if (list[x].removed)
-			continue;
-		line = list[x].text + (list[x].comment ? '#'+list[x].comment : '').replace('##', '#');
-		lines.push(line);
-	}
-	return lines.join('\n')
-}
+            function nestedAdjust() {
+                document.querySelectorAll("div[class='cornerButton gradientDark'],div[class='cornerButton gradientLight'],#slideshowMenu,#viewerMenu").forEach((x) => {
+                    x.classList.add('cornerLeft');
+                });
+            }
 
-function view(element = 'input'){
-	setConsoleVisible(false)
-	setComparatorVisible(false)
-	document.getElementById('viewer').hidden = false;
-	document.getElementById('viewerTitle').innerHTML = element;
-	document.getElementById('viewerSpan').innerHTML = '';
-	
-	document.getElementById('viewerAddTag').hidden = (element != 'tags')
-	
-	comments = document.getElementsByClassName('comment')
-	while (comments.length){
-		comments[0].parentNode.removeChild(comments[0]);
-	}
-	
-	currentElement = element
-	currentList = listParse(element)
-	
-	for (i = 0; i<a.length; i++){
-		presentation = optionPresent(i)
-		removeButton = "<button onclick='remove("+i+")'>x</button>";
-		editButton = "<button onclick='comment("+i+")'>comment</button>";
-		tagButtons = "";
-		//tag buttons
-		for (t = 0; t<tags.length; t++){
-			if (tags[t].removed || currentElement == 'tags')
-				continue
-				tagButtons += "<button style='float:right' onclick='tag("
-					+i
-					+",\""
-					+tags[t].text
-					+"\")'>"
-					+tags[t].text
-					+"</button>";
-			
-		}
-		
-		document.getElementById('viewerSpan').innerHTML += '<div class="option" id="option_'
-			+i
-			+'">'
-			+removeButton
-			+editButton
-			+tagButtons
-			+presentation
-			+'<hr></div>';
-	}
-}
+            function setGallerySize(size) {
+                params.gallerySize = parseInt(size);
+                document.getElementById('gallerySize').value = params.gallerySize;
+                document.getElementById('viewerOptions').style.setProperty('--gallerySize', params.gallerySize);
+            }
 
-function closeViewer(){
-	setConsoleVisible(true);
-	document.getElementById('viewer').hidden = true;
-	document.getElementById(currentElement).value = listStringify(currentList)
-	
-	if (currentElement == 'tags'){
-		tags = currentList
-	}
-	updateEstimate()
-	
-}
+            function setViewMode(mode) {
+                var viewerClass = '';
+                switch (mode) {
+                    case "horizontal":
+                        viewerClass = 'horizontalFlex';
+                        break;
+                    case "gallery":
+                        viewerClass = 'galleryFlex';
+                        break;
+                    case "vertical":
+                        viewerClass = 'verticalFlex';
+                        break;
+                }
+                document.getElementById('viewerOptions').className = viewerClass;
+                params.viewMode = mode;
+                setContentOnlyView(params.contentOnly);
+            }
 
-function addTag(){
-	newTag = prompt("Enter a new tag:")
-	if (!newTag)
-		return;
-	currentList.push({text:newTag,comment:""})
-	document.getElementById('tags').value = listStringify(currentList)
-	tags = currentList
-	view('tags')
-}
+            function setContentOnlyView(contentOnly = undefined) {
+                if (contentOnly === undefined || contentOnly.bubbles) { 
+                    document.getElementById('viewerOptions').classList.toggle('contentOnly');
+                    params.contentOnly = document.getElementById('viewerOptions').classList.contains('contentOnly');
+                    if (contentOnly.preventDefault) 
+                        event.preventDefault();
+                    return;
+                }
 
+                params.contentOnly = contentOnly;
+                switch (contentOnly) {
+                    case true:
+                        document.getElementById('viewerOptions').classList.add('contentOnly');
+                        break;
+                    case false:
+                        document.getElementById('viewerOptions').classList.remove('contentOnly');
+                        break;
+                }
+                return false;
+            }
 
-updateEstimate();
+            function updateEstimate() {
+                var inputSize = document.getElementById('input').value.split('\n').length;
+                var estimate = Math.floor(inputSize * Math.log(inputSize));
+                document.getElementById('restartButton').innerHTML = `Sort (${inputSize} items, ${estimate} comparisons)`;
+            }
 
-</script>
+            function setOption(optionElementID, option, details = false) {
+                document.getElementById(optionElementID).innerHTML = optionPresent(option, details);
+                var container =  document.getElementById(optionElementID).firstChild;
+                if (container){
+                    visibilityObserver.observe(container);
+                    container.ondblclick = false;
+                }
+            }
 
-</body>
+            function filterInput(comments = false, search = undefined) {
+                var type = "Filtering by text.";
+                if (comments) {
+                    type = "Filtering by comments and tags.";
+                }
+                
+                if (!search)
+                    search = prompt(`${type} Enter necessary substring:`);
+                if (!search)
+                    return;
+
+                search = search.toLowerCase();
+                currentList = listParse('input');
+
+                for (var i = 0; i < currentList.length; i++) {
+                    var subject = currentList[i].text;
+                    if (comments)
+                        subject = currentList[i].comment;
+                    if (!subject.toLowerCase().includes(search))
+                        delete currentList[i];
+                }
+
+                currentList = currentList.flat();
+                document.getElementById('input').value = listStringify(currentList);
+            }
+
+            function addToInput(prepend = false, extra = undefined) {
+                var type = "Append text to input.";
+                if (prepend) {
+                    type = "Prepend text to input.";
+                }
+                
+                if (!extra)
+                    extra = prompt(`${type} Enter string:`);
+                if (!extra)
+                    return;
+
+                currentList = listParse('input');
+
+                for (var i = 0; i < currentList.length; i++) {
+                    console.log(currentList[i].text);
+                    currentList[i].text = prepend ? extra + currentList[i].text : currentList[i].text + extra;
+                }
+
+                currentList = currentList.flat();
+                document.getElementById('input').value = listStringify(currentList);
+            }
+
+            function replaceInput(search = undefined, replacement = undefined) {
+                if (!search)
+                    search = prompt("Replace a string:");
+                if (!search)
+                    return;
+
+                if (!replacement)
+                    replacement = prompt(`Replace ${search} with:`);
+                if (replacement === null)
+                    return;
+
+                document.getElementById('input').value = document.getElementById('input').value.split(search).join(replacement);
+            }
+
+            function excludeInput(search = undefined) {
+                if (!search)
+                    search = prompt("Exclude items that contain:");
+                if (!search)
+                    return;
+
+                var lines = document.getElementById('input').value.split("\n");
+                var filtered = lines.filter(function (str) {
+                    return !str.toLowerCase().includes(search.toLowerCase());
+                });
+                document.getElementById('input').value = Array.from(filtered).join("\n");
+            }
+
+            function uniqueInput() {
+                var lines = document.getElementById('input').value.split("\n");
+                var uniqueLines = new Set(lines);
+
+                document.getElementById('input').value = Array.from(uniqueLines).join("\n");
+            }
+
+            function lexicInput() {
+                var lines = document.getElementById('input').value.split("\n").sort();
+                document.getElementById('input').value = lines.join("\n");
+            }
+
+            function compare(a, b) {
+                comparisons += 1;
+                setOption('A', a);
+                setOption('B', b);
+                
+                return new Promise(resolve => {
+                    document.getElementById('A').onclick = function () {
+                        resolve(true);
+                    };
+                    document.getElementById('B').onclick = function () {
+                        resolve(false);
+                    };
+                    
+                    document.onkeydown = function (event) {
+                        switch (event.key) {
+                            case "ArrowLeft":
+                                resolve(true);
+                                break;
+                            case "ArrowRight":
+                                resolve(false);
+                        }
+                    };
+                });
+            }
+            
+            function shuffleInput() {
+                var a = listParse('input');
+                var b, c, d;
+                c = a.length;
+                while (c)
+                    b = Math.random() * c-- | 0, d = a[c], a[c] = a[b], a[b] = d;
+                document.getElementById('input').value = listStringify(a);
+            }
+            
+            function sortStart() {
+                comparisons = 0;
+                sortStartTime = Date.now();
+                document.getElementById('output').value = '';
+
+                setConsoleVisible(false);
+                setOptionsVisible(true);
+
+                currentList = listParse('input');
+                var k = Object.keys(currentList);
+
+                mergeSort(k).then(function (x) {
+                    var result = `Sorted in ${comparisons} comparisons, ${Math.ceil((Date.now() - sortStartTime) / (1000 * 60))} minutes`;
+
+                    document.getElementById('output').hidden = false;
+                    document.getElementById('output').value = listStringify(currentList, x);
+                    document.getElementById('output').value += "\n" + result;
+                    
+                    setOptionsVisible(false);
+                    setConsoleVisible(true);
+                });
+            }
+            
+            function setOptionsVisible(visible = true) {
+                document.getElementById('A').hidden = !visible;
+                document.getElementById('B').hidden = !visible;
+            }
+            
+            function setConsoleVisible(visible = true) {
+                document.getElementById('console').hidden = !visible;
+                setComparatorVisible(!visible);
+            }
+            
+            function setComparatorVisible(visible = true) {
+                document.getElementById('hideConsoleButton').hidden = false;
+                document.getElementById('comparator').hidden = !visible;
+            }
+            
+            function remove(id) {
+                currentList[id].removed = true;
+                document.getElementById("option_" + id).remove();
+            }
+            
+            function comment(id) {
+                var comment = prompt("Enter comment:", currentList[id].comment);
+                if (comment === null) {
+                    return;
+                }
+                
+                currentList[id].comment = comment;
+                currentList[id].tags = comment.split('`');
+                optionUpdate(id);
+            }
+            
+            function tag(id, tag) {
+                currentList[id].comment += "`" + tag;
+                currentList[id].tags.push(tag);
+                optionUpdate(id);
+            }
+            
+            function listParse(element) {
+                var list = [];
+                var a = document.getElementById(element).value ? document.getElementById(element).value.split('\n') : [];
+
+                for (var i = 0; i < a.length; i++) {
+                    var line = a[i].split('`');
+                    list[i] = {"text": line.shift()};
+                    list[i].tags = line;
+                    list[i].comment = line.join("`");
+                }
+                return list;
+            }
+            
+            function listStringify(list, key = null) {
+                var lines = [];
+                
+                for (var i = 0; i < list.length; i++) {
+                    var x = i;
+                    if (key)
+                        x = key[i];
+                    if (list[x].removed)
+                        continue;
+                    var line = list[x].text + (list[x].comment ? '`' + list[x].comment : '').replace('``', '`');
+                    lines.push(line);
+                }
+                
+                return lines.join('\n');
+            }
+
+            function view(element = 'input', scrollToId = 0) {
+                while (document.getElementsByClassName("container")[0])
+                    document.getElementsByClassName("container")[0].remove();
+                
+                document.getElementById('viewer').hidden = false;
+                document.getElementById('viewerTitle').innerHTML = element === 'input' && params.title ? params.title : element;
+                document.getElementById('viewerOptions').innerHTML = '';
+                document.getElementById('viewerAddTag').hidden = (element !== 'tags');
+                document.getElementById('viewerImportTags').hidden = (element !== 'tags');
+
+                var comments = document.getElementsByClassName('comment');
+                while (comments.length) 
+                    comments[0].parentNode.removeChild(comments[0]);
+                
+                currentElement = element;
+                currentList = listParse(element);
+                var options = "";
+
+                for (var i = 0; i < currentList.length; i++) {
+                    var presentation = optionPresent(i);
+                    var removeButton = `<button onclick='remove(${i})'>Delete</button>`;
+                    var editButton = `<button onclick='comment(${i})'>Comment</button>`;
+                    var tagButtons = "";
+                    var option = currentList[i];
+                    var style = "";
+                    
+                    for (var j in option.tags) {
+                        switch (true) {
+                            case option.tags[j].startsWith('styleflex'):
+                                style = option.tags[j].split('=').pop();
+                                break;
+                        }
+                    }
+
+                    for (var t = 0; t < tags.length; t++) {
+                        if (tags[t].removed || currentElement === 'tags')
+                            continue;
+                        tagButtons += `<button onclick='tag(${i},"${tags[t].text}")'>
+                            ${tags[t].text}
+                        </button>`;
+                    }
+
+                    options += `<div class="option snap" ondblclick="containerFullscreen(${i})" id="option_${i}" style="${style}">
+                        <div class="cornerButton cornerTop gradientDark" onclick="containerFullscreen(${i})" onwheel="setContentOnlyView(event)" onmousewheel="setContentOnlyView(event)" alt="Open container in fullscreen"></div>
+                        <div class="optionContents">
+                            <div class="optionButtons tint">
+                                ${removeButton} ${editButton} ${tagButtons}
+                            </div>
+                            ${presentation} 
+                        </div>
+                    </div>`;
+                }
+
+                document.getElementById('viewerOptions').innerHTML += options;
+                document.getElementById('viewer').scrollTo(0, document.getElementById('viewerOptions').offsetTop);
+                observeContainers();
+                
+                try {
+                    var rect = document.getElementById('option_' + scrollToId).getBoundingClientRect();
+                    document.getElementById('viewer').scrollTo(rect.x + 1, document.getElementById('viewerOptions').offsetTop);
+                } catch (e) {
+                }
+
+            }
+            
+            function fullscreenChanged(event) {
+                if (!document.fullscreenElement) {
+                    document.getElementById('slideshow').hidden = true;
+                    observeContainers();
+                }
+            }
+            
+            function viewerFullscreenToggle(state = undefined) {
+                if (!document.fullscreenElement || state) {
+                    document.body.requestFullscreen();
+                } else {
+                    document.exitFullscreen();
+                }
+            }
+            
+            function observeContainers() {
+                Array.prototype.forEach.call(document.getElementsByClassName("container"), (x) => {
+                    visibilityObserver.observe(x);
+                });
+            }
+            
+            function slideshowMenu(pause = false) {
+                slideshowPause();
+                
+                var menu = document.getElementById('slideshowMenu');
+                menu.hidden = !menu.hidden;
+                
+                if (menu.hidden && !pause) {
+                    slideshowTimeoutId = setTimeout(slideshowTransition, currentSlideDelay * 1000, 'input', currentShowId + 1);
+                    document.getElementById('slideshowMenuButton').classList.remove("light");
+                }
+                
+                try {
+                    document.getElementById('slide').firstChild.contentWindow.focus();
+                } catch (e) {
+                }
+            }
+            
+            function viewerMenu() {
+                var menu = document.getElementById('viewerMenu');
+                menu.hidden = !menu.hidden;
+            }
+            
+            function slideshowPause() {
+                clearTimeout(slideshowTimeoutId);
+                document.getElementById('slide').style.opacity = 1;
+                document.getElementById('slideshowMenuButton').classList.add("light");
+            }
+            
+            function slideshowStop(callback = false) {
+                clearTimeout(slideshowTimeoutId);
+                fadeCallback(function () {
+                    document.getElementById('slide').innerHTML = '';
+                    document.getElementById('slideshow').hidden = true;
+                    if (callback)
+                        callback();
+                }, 1, 1, params.containerShowDelay);
+            }
+            
+            function slideshowTransition(element = 'input', showId = 0, single = false) {
+                slideshowTimeoutId = setTimeout(slideshow, params.slideshowPreTransitionDelay * 1000, element, showId, single);
+                document.getElementById('slide').style.opacity = 0;
+            }
+            
+            function slideshowScroll(e) {
+                fadeCallback(function () {
+                    slideshow('input', e.deltaY >= 0 ? currentShowId + 1 : -1);
+                }, 0.1, 0.1);
+            }
+            
+            function slideshow(element = 'input', showId = 0, single = false) {
+                clearTimeout(slideshowTimeoutId);
+                closeViewer();
+                
+                document.getElementById('slideshowMenuButton').classList.remove("light");
+                document.querySelectorAll('.container').forEach(function (x) {
+                    x.remove();
+                });
+
+                currentElement = element;
+                currentList = listParse(element);
+                currentSlideDelay = params.slideshowDelay;
+
+                if (showId < 0) {
+                    showId = slideshowHistory.pop();
+                    showId = (currentShowId === showId ? slideshowHistory.pop() : showId);
+                    showId = showId ? showId : 0;
+                } else {
+                    var nextShowId = Math.floor(Math.random() * currentList.length);
+                    nextShowId = (nextShowId === slideshowHistory.slice(-1)[0] && Math.random() > 0.5) ? Math.floor(Math.random() * currentList.length) : nextShowId;
+                    showId = (params.slideshowShuffle && !single ? nextShowId : showId) % currentList.length;
+                }
+
+                var option = currentList[showId];
+
+                if (!option)
+                    return;
+
+                for (var i in option.tags) {
+                    if (option.tags[i].startsWith('noslideshow')) {
+                        return slideshow(element, showId + 1, single);
+                    }
+                    if (option.tags[i].startsWith('slideshowdelay')) {
+                        currentSlideDelay = parseInt(option.tags[i].split('=').pop());
+                    }
+                }
+
+                slideshowHistory.push(showId);
+                currentShowId = showId;
+                
+                var presentation = optionPresent(showId, false);
+                document.getElementById('slide').innerHTML = presentation;
+                observeContainers();
+                document.getElementById('slideshow').hidden = false;
+
+                setTimeout(function () {
+                    document.getElementById('slide').style.opacity = 1;
+                }, params.containerShowDelay * 1000);
+
+                if (single || !document.getElementById('slideshowMenu').hidden)
+                    return;
+
+                slideshowTimeoutId = setTimeout(slideshowTransition, currentSlideDelay * 1000, element, showId + 1);
+            }
+            
+            function lazyLoad(visibilityEntry) {
+                var container = visibilityEntry.target;
+                if (!container)
+                    return;
+
+                if (visibilityEntry.isIntersecting !== true) {
+                    containerStop(container);
+                } else if (!container.data || !container.src) {
+                    containerStart(container);
+                }
+            }
+
+            function containerFullscreen(id) {
+                document.getElementById('containerStopButton').hidden = false;
+                var container = containerGet(id);
+                container.classList.add("fullscreen");
+
+                Array.prototype.forEach.call(document.querySelectorAll(".container:not(.fullscreen)"), (x) => {
+                    containerStop(x);
+                });
+
+                try {
+                    container.contentWindow.focus();
+                } catch (e) {
+                }
+
+                visibilityObserver.disconnect();
+            }
+
+            function containerFullscreenStop() {
+                document.querySelectorAll('.container.fullscreen').forEach(function (element) {
+                    element.classList.remove('fullscreen');
+                });
+                
+                document.getElementById('containerStopButton').hidden = true;
+                observeContainers();
+            }
+
+            function containerGet(id) {
+                return document.querySelector(`.container[num='${id}']`);
+            }
+
+            function containerStop(container) {
+                if (!container || !container.getAttribute)
+                    return;
+                    
+                var id = container.getAttribute("num");
+                var option = currentList[id];
+                if (!option)
+                    return;
+                    
+                for (var i in option.tags) {
+                    if (option.tags[i].startsWith('nohide')) {
+                        return;
+                    }
+                }
+
+                container.style.transitionProperty = 'none';
+                container.style.opacity = 0.001;
+                container.onload = undefined;
+                container.oncanplay = undefined;
+                container.src = 'about:blank';
+                container.data = 'about:blank';
+                container.removeAttribute("src");
+                container.removeAttribute("data");
+            }
+
+            function containerStart(container) {
+                if (!container || !container.getAttribute)
+                    return;
+
+                var noContent = ['about:blank', ''];
+
+                if ((container.src || container.data) && (!noContent.includes(container.src) && !noContent.includes(container.data)))
+                    return;
+
+                function bootContainer() {
+                    const orderUrlParams = this.getAttribute("data-order-params");
+                    
+                    if (orderUrlParams) {
+                        this.contentWindow.postMessage({"dataOrderParams": orderUrlParams},'*');
+                    }
+                    
+                    setTimeout(function () {
+                        try {
+                            container.style.opacity = 1;
+                        } catch (e) {
+                        }
+                    }, params.containerShowDelay * 1000);
+                }
+                
+                container.style.transitionProperty = '';
+                container.onload = bootContainer;
+                container.oncanplay = bootContainer;
+                container.data = container.getAttribute("data-src");
+                container.src = container.getAttribute("data-src");
+            }
+
+            function closeViewer() {
+                if (document.getElementById('viewer').hidden)
+                    return;
+
+                document.getElementById('viewer').hidden = true;
+                document.getElementById(currentElement).value = listStringify(currentList);
+
+                if (currentElement === 'tags') {
+                    tags = currentList;
+                }
+                updateEstimate();
+            }
+
+            function addTag() {
+                var newTag = prompt("Enter a new tag:");
+                if (!newTag)
+                    return;
+
+                currentList.push({text: newTag, comment: "", tags: []});
+                document.getElementById('tags').value = listStringify(currentList);
+                tags = currentList;
+                view('tags');
+            }
+
+            function importTags() {
+                var input = listParse('input');
+                for (var i in input) {
+                    for (var j in input[i].tags) {
+                        var newTag = {text: input[i].tags[j], comment: "", tags: []};
+                        if (!tags.some(tag => tag.text === newTag.text))
+                            tags.push(newTag);
+                    }
+                }
+                
+                document.getElementById('tags').value = listStringify(tags);
+                view('tags');
+            }
+            
+            function downloadInput(){
+                var blob = new Blob([document.getElementById("input").value], {type: "plain/text"});
+                var url = window.URL.createObjectURL(blob);
+                
+                var a = document.createElement('a');
+                a.href = url;
+                a.download = `${params.title ? params.title : 'input'}.txt`;
+                a.click();
+                
+                window.URL.revokeObjectURL(url);
+            }
+
+            function onLoad() {
+                reset();
+
+                orderUrl.replace(/[#?&]+([^=&]+)=([^&]*)/gi, function (m, key, value) {
+                    if (["url", "excludeInput", "appendToInput"].includes(key)) {
+                        params[key].push(decodeURIComponent(value));
+                    } else {
+                        value = decodeURIComponent(value);
+                        params[key] = parseInt(value) == value ? parseInt(value) : value;
+                    }
+                });
+
+                if (params.input) {
+                    setInput(params.input);
+                } else if (params.url.length) {
+                    setInput('');
+                }
+
+                for (var id in params.url) {
+                    inputFromUrl(params.url[id]);
+                }
+
+                onUpdate();
+
+            }
+
+            function onUpdate() {
+                if (params.title)
+                    document.title = params.title;
+
+                if (params.filterInput)
+                    filterInput(false, params.filterInput);
+
+                if (params.filterComment)
+                    filterInput(true, params.filterComment);
+
+                for (var id in params.excludeInput)
+                    excludeInput(params.excludeInput[id]);
+
+                for (var id in params.appendToInput)
+                    addToInput(false, params.appendToInput[id]);
+
+                if (params.uniqueInput)
+                    uniqueInput();
+
+                if (params.shuffleInput)
+                    shuffleInput();
+
+                if (params.lexicInput)
+                    lexicInput();
+
+                if (params.importTags)
+                    importTags();
+
+                if (params.nested) {
+                    nestedAdjust();
+                }
+
+                updateEstimate();
+
+                setViewMode(params.viewMode);
+                setGallerySize(params.gallerySize);
+
+                if (parseInt(params.contentOnly)) {
+                    setContentOnlyView(true);
+                }
+
+                if (params.viewStart) {
+                    view('input', params.viewStart - 1);
+                }
+
+                if (params.sortStart) {
+                    sortStart();
+                }
+
+                if (params.slideshowStart) {
+                    clearTimeout(slideshowTimeoutId);
+                    slideshow();
+                }
+
+                updateEstimate();
+                fadeIn(3);
+                console.log(params);
+            }
+        </script>
+        <script>
+            async function mergeSort(arr) {
+                if (arr.length < 2)
+                    return arr;
+                var mid = Math.floor(arr.length / 2);
+                var subLeft = await mergeSort(arr.slice(0, mid));
+                var subRight = await mergeSort(arr.slice(mid));
+                return merge(subLeft, subRight);
+            }
+
+            async function merge(a, b) {
+                var result = [];
+                while (a.length > 0 && b.length > 0) {
+                    var aSmaller = await compare(a[0], b[0]);
+                    result.push(aSmaller ? a.shift() : b.shift());
+                }
+                return result.concat(a.length ? a : b);
+            }
+        </script>
+    </body>
 </html>
+<!-- Copyright (c) 2024 Nikita Korzhitskii -->
