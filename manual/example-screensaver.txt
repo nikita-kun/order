@@ -3,4 +3,3 @@ https://mnmxmx.github.io/shadowmap-fog-demo/dst/#`screensaver
 https://roycurtis.github.io/Flurry-WebGL/#`screensaver
 https://rreusser.github.io/continuum-gravity/#anisotropic filter on and off-different result`style=filter:hue-rotate(-100deg)`screensaver
 https://rreusser.github.io/ueda-attractor/#`style=filter:invert(1) hue-rotate(-35deg)`spectrum`screensaver
-https://domenicobrz.github.io/webgl/projects/gpu-fluid-sim/#`style=filter:invert(1) hue-rotate(50deg); min-height: calc(100% + 200px)`styleflex=overflow:hidden
