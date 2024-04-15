@@ -634,7 +634,10 @@
 
                         if (!container){
                             extension = filename ? filename.split(".").pop().toLowerCase() : option.textReplaced.split(".").pop().toLowerCase();
-                            container = containerMap[extension] ? containerMap[extension] : 'object';
+                            if (containerMap[extension])
+                                container = containerMap[extension];
+                            else
+                                container = document.head.querySelector('script') ? 'iframe' : 'object';
                         }
 
                         if (details)
@@ -751,7 +754,7 @@
                 if (contentOnly === undefined || contentOnly.bubbles) { 
                     document.getElementById('viewerOptions').classList.toggle('contentOnly');
                     params.contentOnly = document.getElementById('viewerOptions').classList.contains('contentOnly');
-                    if (contentOnly.preventDefault) 
+                    if (contentOnly && contentOnly.preventDefault) 
                         event.preventDefault();
                     return;
                 }
