@@ -705,7 +705,7 @@
                             onUpdate();
                     }
                 });
-                req.open("GET", url.startsWith('blob') || url.startsWith('file') || url.startsWith('content') ? url : url + "?" + Math.random());
+                req.open("GET", url.startsWith('blob') || url.startsWith('file') || url.startsWith('content') || url.includes('example') ? url : url + "?" + Math.random());
                 req.send();
             }
 
