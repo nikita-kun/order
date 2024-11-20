@@ -4,27 +4,29 @@
 <title>Order: examples</title>
 <meta name="description" content="Order. Examples, presentation of media items.">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<style>body{max-width: 20cm; margin: 0px auto;}</style>
 </head>
-<body><h1><a href="https://github.com/nikita-kun/order" target="_blank" rel="noreferrer">Order</a></h1>
+<body><h1>Order</h1>
 <ul>
-<li>Display lists of items: images, websites, text, documents</li>
-<li>List items in simple text files</li>
-<li>Layouts: horizontal, vertical, grid, slideshow</li>
+<li>Use multiple websites and files in one tab</li>
+<li>Slideshow, feed, custom layouts</li>
+<li>Load items listed in text files or embedded in URL</li>
 <li>Interact by hovering, scrolling, and clicking on active corners</li>
 <li>Sort lists by manually comparing pairs of items</li>
 <li>Single-file portable HTML app</li>
 </ul>
 <h2>Examples</h2>
-<p><em>Click and scroll on window and tab corners!</em></p>
+<p><em>Use control corner buttons</em></p>
+<!-- Meta example -->
 <h3>Web pages</h3>
 <ul>
-<li><a href="/order/#viewMode=horizontal&amp;viewStart=1&amp;gallerySize=3&amp;title=Web&amp;url=./manual/example-web.txt" target="_blank" rel="noreferrer">Horizontal tabs</a></li>
-<li><a href="/order/#viewMode=horizontal&amp;viewStart=1&amp;gallerySize=3&amp;contentOnly=0&amp;title=Web&amp;url=./manual/example-web.txt" target="_blank" rel="noreferrer">Horizontal tabs with headers</a></li>
+<li><a href="/order/#viewMode=feed&amp;viewStart=1&amp;gallerySize=2&amp;contentOnly=0&amp;title=MobileFeed&amp;url=./manual/example-web.txt" target="_blank" rel="noreferrer">Mobile feed</a></li>
+<li><a href="/order/#viewMode=horizontal&amp;viewStart=1&amp;gallerySize=3&amp;contentOnly=0&amp;title=Web&amp;url=./manual/example-web.txt" target="_blank" rel="noreferrer">Horizontal tabs</a></li>
 <li><a href="/order/#viewMode=gallery&amp;viewStart=1&amp;gallerySize=3&amp;title=Web&amp;url=./manual/example-web.txt" target="_blank" rel="noreferrer">Gallery</a></li>
 </ul>
 <h3>Photo album</h3>
 <ul>
-<li><a href="/order/#viewMode=vertical&amp;viewStart=1&amp;gallerySize=2&amp;shuffleInput=1&amp;title=Photos&amp;url=./manual/example-photo.txt" target="_blank" rel="noreferrer">Vertical feed</a></li>
+<li><a href="/order/#viewMode=vertical&amp;viewStart=1&amp;gallerySize=2&amp;shuffleInput=1&amp;title=Photos&amp;url=./manual/example-photo.txt" target="_blank" rel="noreferrer">Widescreen feed</a></li>
 <li><a href="/order/#viewMode=gallery&amp;viewStart=1&amp;gallerySize=2&amp;shuffleInput=1&amp;title=Photos&amp;url=./manual/example-photo.txt" target="_blank" rel="noreferrer">Gallery</a></li>
 <li><a href="/order/#slideshowDelay=15&amp;slideshowStart=1&amp;title=Photos&amp;url=./manual/example-photo.txt" target="_blank" rel="noreferrer">Slideshow</a></li>
 <li><a href="/order/#viewStart=1&amp;viewMode=horizontal&amp;gallerySize=3&amp;nested=1&amp;title=NestedSlideshows&amp;input=%23slideshowDelay%3D10%26slideshowStart%3D1%26title%3DPhotos%26url%3D.%2Fmanual%2Fexample-photo.txt%0A%23slideshowDelay%3D9%26slideshowStart%3D1%26title%3DPhotos%26url%3D.%2Fmanual%2Fexample-photo.txt%0A%23slideshowDelay%3D8%26slideshowStart%3D1%26title%3DPhotos%26url%3D.%2Fmanual%2Fexample-photo.txt" target="_blank" rel="noreferrer">Nested slideshows</a></li>
@@ -39,16 +41,20 @@
 <li><a href="/order/#viewMode=horizontal&amp;viewStart=1&amp;gallerySize=3&amp;shuffleInput=1&amp;title=Panorama&amp;url=./manual/example-panorama.txt" target="_blank" rel="noreferrer">Horizontal</a></li>
 <li><a href="/order/#slideshowDelay=60&amp;slideshowStart=1&amp;viewMode=horizontal&amp;title=Panorama&amp;url=./manual/example-panorama.txt" target="_blank" rel="noreferrer">Slideshow</a></li>
 </ul>
+<h3>Styling</h3>
+<ul>
+<li><a href="/order/#viewStart=1&amp;gallerySize=2&amp;contentOnly=0&amp;url=./manual/example-effect.txt" target="_blank" rel="noreferrer">Item CSS styling and item rewriting</a><!-- * **custom layout example** -->
+</li>
+</ul>
 <h3>Item sorting</h3>
 <ul>
 <li><a href="/order/#sortStart=1&amp;shuffleInput=1&amp;viewMode=vertical&amp;gallerySize=10&amp;title=Sort&amp;input=1%0A2%0A3%0A4%0A5%0A6%0A7%0A8%0A9%0A0" target="_blank" rel="noreferrer">Sort numbers</a></li>
 <li><a href="/order/#sortStart=1&amp;shuffleInput=1&amp;viewMode=vertical&amp;gallerySize=10&amp;title=Sort&amp;input=wash%20dishes%0Adinner%0Asleep%0Aleisure%0Awork%0Awalk" target="_blank" rel="noreferrer">Sort tasks</a></li>
 <li><a href="/order/#sortStart=1&amp;shuffleInput=1&amp;viewMode=vertical&amp;gallerySize=5&amp;title=Sort&amp;filterComment=close&amp;url=./manual/example-photo.txt" target="_blank" rel="noreferrer">Sort photos</a></li>
 </ul>
-<h3>Other</h3>
+<h3>Item input</h3>
 <ul>
 <li><a href="/order/" target="_blank" rel="noreferrer">Main menu</a></li>
-<li><a href="/order/#viewStart=1&amp;gallerySize=5&amp;contentOnly=0&amp;url=./manual/example-effect.txt" target="_blank" rel="noreferrer">Item CSS styling and item rewriting</a></li>
 <li><a href="/order/#input=1%0A2%0A3%0A4%0A5%0A6%0A7%0A8%0A9%0A0" target="_blank" rel="noreferrer">Input list encoded in URL</a></li>
 <li><a href="/order/#url=./manual/example-screensaver.txt&amp;url=./manual/example-web.txt" target="_blank" rel="noreferrer">Input lists downloaded from URL</a></li>
 </ul>
@@ -61,7 +67,7 @@
 <li><strong>slideshowDelay</strong>: Delay between slides in slideshow mode</li>
 <li><strong>slideshowPreTransitionDelay</strong>: Slide fading delay</li>
 <li><strong>slideshowStart</strong>: Start slideshow on load, if true</li>
-<li><strong>viewMode</strong>: <code>gallery</code>, <code>horizontal</code>, or <code>vertical</code></li>
+<li><strong>viewMode</strong>: <code>gallery</code>, <code>horizontal</code>, <code>vertical</code>, or <code>feed</code></li>
 <li><strong>gallerySize</strong>: Number of items in viewer</li>
 <li><strong>contentOnly</strong>: Show content of items without header and action buttons, if true</li>
 <li><strong>viewStart</strong>: Start viewer mode on load, if true</li>
@@ -76,21 +82,24 @@
 </ul>
 <h2>Functional tags, append to items after ` symbol</h2>
 <ul>
+<li><strong>noscript</strong>: Load item without javascript</li>
 <li><strong>flip</strong>: Flip item horizontally</li>
 <li><strong>randflip</strong>: Flip item horizontally at random</li>
 <li><strong>spectrum</strong>: Animate item colors, useful for screensavers</li>
 <li><strong>noslideshow</strong>: Skip item from slideshow</li>
 <li><strong>nohide</strong>: Disable lazy unloading for item, preserve state</li>
 <li><strong>slideshowdelay</strong>: Custom slide duration for item</li>
-<li><strong>container</strong>: Set HTML container for URL, <code>container=iframe, container=img</code></li>
+<li><strong>container</strong>: Override default container for URL, <code>container=iframe, container=img, container=object</code> (website and picture appearance depends on container) </li>
 <li><strong>rewrite</strong>: Rewrite item using JS eval, <code>rewrite?"argon"="alpha"&amp;"xenon"=Math.random()</code></li>
 <li><strong>style</strong>: CSS style item, <code>style=filter: saturate(0)</code></li>
 <li><strong>styleflex</strong>: CSS style item with details header, useful for custom layouts</li>
 </ul>
+<h2>Interface</h2>
+<p><em>Click and scroll on window and tab corners!</em></p>
 <h2>Considerations</h2>
 <ul>
 <li>Some URLs refuse to be displayed, search for embeddable links</li>
-<li>Verify input: URLs and item lists may contain arbitrary code</li>
+<li>Verify URLs, they may contain arbitrary code</li>
 </ul>
 <p><a href="https://github.com/nikita-kun/order" target="_blank" rel="noreferrer">Source code</a>
 Copyright (c) 2024 Nikita Korzhitskii</p>
