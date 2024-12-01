@@ -1,4 +1,9 @@
 <!-- 
+doc view style
+doc interface (button to maximize item to full window, button to minimize item, slideshow button in viewer mode, exit slideshow button, menu button)
+
+slow creation of options, forced reflow, optimize
+
 scrolling in viewer skipping bug, quirks when scrolling and snapping, prevent windows from resizing, width-height attr for object
 reset min/max height/width limits on window resize
 resizer scroller width in feed mode
@@ -271,6 +276,7 @@ earliest non-supported firefox from ubuntu'12. no visibility observeer, arrow no
             }
             .optionContents{
                 display: flex;
+                flex-grow: 1;
                 flex-direction: column;
                 min-height: 100%;
                 min-width: 100%;
@@ -294,6 +300,9 @@ earliest non-supported firefox from ubuntu'12. no visibility observeer, arrow no
                 width: 100%;
                 font-size: 60%;
             }
+            .optionContents.nocomment i.comment{
+                display:none;
+            }
             .optionPlaintext{
                 margin: 10px;
                 text-align: center;
@@ -316,14 +325,15 @@ earliest non-supported firefox from ubuntu'12. no visibility observeer, arrow no
                 pointer-events: none;
             }
             .optionDetails{
-                /*text-align: center;
-                flex: 0 1 auto;
-                width: 100%;*/
                 display: flex;
                 flex-direction: column;
                 text-align: center;
-                /*justify-content: center;
-                align-items: center;*/
+            }
+            .optionDetails > div{
+                width: 100%;
+            }
+            .optionDetails > a{
+                display: inline;
             }
             img.container{
                 overflow: hidden;
@@ -586,7 +596,7 @@ earliest non-supported firefox from ubuntu'12. no visibility observeer, arrow no
 
             <ul class="mainMenu">
                 <li onclick="view('input')">View input</li>
-                <li onclick="window.open('#input=' + encodeURIComponent(document.getElementById('input').value), '_blank')">Embed input</li>
+                <li onclick="window.open('?#input=' + encodeURIComponent(document.getElementById('input').value), '_blank')">Embed input</li>
                 <li id='viewOutput' onclick="view('output')">View output</li>
                 <li onclick="view('tags')">View tags</li>
                 <li onclick="files.click()">Load files</li>
@@ -630,7 +640,7 @@ earliest non-supported firefox from ubuntu'12. no visibility observeer, arrow no
                 }
             });
 
-            window.addEventListener('load', onLoad);
+            //window.addEventListener('load', onLoad);
             document.addEventListener("fullscreenchange", fullscreenChanged);
 
 			['wheel', 'mousewheel', 'DOMMouseScroll'].forEach(event => {
@@ -670,7 +680,7 @@ earliest non-supported firefox from ubuntu'12. no visibility observeer, arrow no
                     "slideshowPreTransitionDelay": 5,
                     "slideshowStart": false,
                     "gallerySize": 2,
-                    "viewMode": "gallery",
+                    "viewMode": "feed",
                     "contentOnly": true,
                     "viewStart": false,
                     "sortStart": false,
@@ -682,6 +692,7 @@ earliest non-supported firefox from ubuntu'12. no visibility observeer, arrow no
                     "lexicInput": false,
                     "excludeInput": [],
                     "appendToInput": [],
+                    "prependToInput": [],
                     "containerShowDelay": 1,
                     "nested": false,
                     "style": false
@@ -780,6 +791,9 @@ earliest non-supported firefox from ubuntu'12. no visibility observeer, arrow no
                 var dataSrc = '';
                 var dataOrderParams = '';
                 var text = '';
+                var title = '';
+                var cover = '';
+                var link = '';
                 var filename = '';
                 var extension = '';
 
@@ -794,11 +808,24 @@ earliest non-supported firefox from ubuntu'12. no visibility observeer, arrow no
                         case option.tags[i].startsWith('filename='):
                             filename = option.tags[i].split('=').pop();
                             break;
+                        case option.tags[i].startsWith('title='):
+                            title = option.tags[i].split('=').pop();
+                            break;
+                        case option.tags[i].startsWith('cover='):
+                            cover = option.tags[i].split('=').pop();
+                            break;
+                        case option.tags[i].startsWith('link='):
+                            link = option.tags[i].split('=').pop();
+                            break;
                         case option.tags[i].startsWith('spectrum'):
                             spectrum = true;
                             break;
                         case option.tags[i].startsWith('noscript'):
                             sandboxArgs = sandboxArgs.filter(item => item !== 'allow-scripts');
+                            break;
+                        case option.tags[i].startsWith('topnavigation'):
+                            sandboxArgs.push('allow-top-navigation');
+                            sandboxArgs.push('allow-top-navigation-by-user-activation');
                             break;
                         case option.tags[i].startsWith('flip'):
                             flip = true;
@@ -826,9 +853,9 @@ earliest non-supported firefox from ubuntu'12. no visibility observeer, arrow no
                     case option.text.startsWith("/"):
                     case option.text.startsWith("#"):
                         try {
-                            text = ((new URL(option.text)).hostname);
+                            text = ((new URL(link ? link : option.text)).hostname);
                         } catch (e) {
-                            text = option.textReplaced;
+                            text = link ? link : option.textReplaced;
                         }
 
                         if (option.text.startsWith("#"))
@@ -846,7 +873,7 @@ earliest non-supported firefox from ubuntu'12. no visibility observeer, arrow no
 
                         if (details)
                             presentation = `<div class="optionDetails tint">
-                                <a target="_blank" rel="noreferrer" href="${option.textReplaced}" title="${option.textReplaced}">${text}</a>
+                                <div><a target="_blank" rel="noreferrer" href="${link ? link : option.textReplaced}" title="${link ? link : option.textReplaced}">${title ? title : text}</a></div>
                                 <i class="comment" id="comment_${id}" title="${option.comment}">${option.comment}</i>
                             </div>`;
                         
@@ -869,7 +896,6 @@ earliest non-supported firefox from ubuntu'12. no visibility observeer, arrow no
                             dataSrc = option.textReplaced;
                         }
                         
-                        //
                         presentation += `<${container} 
                             id="container_${id}" 
                             num="${id}" 
@@ -1211,18 +1237,20 @@ earliest non-supported firefox from ubuntu'12. no visibility observeer, arrow no
             }
 
             function view(element = 'input', scrollToId = 0) {
+                entryObserver.disconnect();
+                
                 while (document.getElementsByClassName("container")[0])
                     document.getElementsByClassName("container")[0].remove();
-                
-                document.getElementById('viewer').hidden = false;
-                document.getElementById('viewerTitle').innerHTML = element === 'input' && params.title ? params.title : element;
-                document.getElementById('viewerOptions').innerHTML = '';
-                document.getElementById('viewerAddTag').hidden = (element !== 'tags');
-                document.getElementById('viewerImportTags').hidden = (element !== 'tags');
 
                 var comments = document.getElementsByClassName('comment');
                 while (comments.length) 
                     comments[0].parentNode.removeChild(comments[0]);
+                    
+                document.getElementById('viewer').hidden = false;
+                document.getElementById('viewerTitle').innerHTML = element === 'input' && params.title ? params.title : element;
+                //document.getElementById('viewerOptions').innerHTML = '';
+                document.getElementById('viewerAddTag').hidden = (element !== 'tags');
+                document.getElementById('viewerImportTags').hidden = (element !== 'tags');
                 
                 currentElement = element;
                 currentList = listParse(element);
@@ -1237,15 +1265,8 @@ earliest non-supported firefox from ubuntu'12. no visibility observeer, arrow no
                     var tagButtons = "";
                     var option = currentList[i];
                     var style = "";
+                    var nocomment = "";
                     
-                    for (var j in option.tags) {
-                        switch (true) {
-                            case option.tags[j].startsWith('styleflex'):
-                                style = option.tags[j].split('=').pop();
-                                break;
-                        }
-                    }
-
                     for (var t = 0; t < tags.length; t++) {
                         if (tags[t].removed || currentElement === 'tags')
                             continue;
@@ -1253,10 +1274,24 @@ earliest non-supported firefox from ubuntu'12. no visibility observeer, arrow no
                             ${tags[t].text}
                         </button>`;
                     }
+                    
+                    for (var j in option.tags) {
+                        switch (true) {
+                            case option.tags[j].startsWith('styleflex'):
+                                style = option.tags[j].split('=').pop();
+                                break;
+                            case option.tags[j].startsWith('nocomment'):
+                                nocomment = "nocomment";
+                                break;
+                            case option.tags[j].startsWith('nobuttons'):
+                                removeButton = "", editButton = "", commentButton = "", copyButton = "", tagButtons = "";
+                                break;
+                        }
+                    }
 
                     options += `<div class="option snap" ondblclick="containerFullscreen(${i})" id="option_${i}" style="${style}">
-                        <div class="cornerButton cornerTop gradientDark contentOnlyTrigger" onclick="containerFullscreen(${i})" alt="Open container in fullscreen"></div>
-                        <div class="optionContents">
+                        <div class="cornerButton cornerTop gradientDark contentOnlyTrigger" onclick="containerFullscreen(${i})" alt="Maximize container"></div>
+                        <div class="optionContents ${nocomment}">
                             <div class="optionButtons tint">
                                 ${removeButton} ${editButton} ${commentButton} ${copyButton} ${tagButtons}
                             </div>
@@ -1265,10 +1300,10 @@ earliest non-supported firefox from ubuntu'12. no visibility observeer, arrow no
                     </div>`;
                 }
 
-                document.getElementById('viewerOptions').innerHTML += options;
+                document.getElementById('viewerOptions').innerHTML = options;
                 document.getElementById('viewer').scrollTo(0, document.getElementById('viewerOptions').offsetTop);
                 observeContainers();
-                
+
                 try {
                     var rect = document.getElementById('option_' + scrollToId).getBoundingClientRect();
                     document.getElementById('viewer').scrollTo(rect.x + 1, document.getElementById('viewerOptions').offsetTop);
@@ -1567,11 +1602,12 @@ earliest non-supported firefox from ubuntu'12. no visibility observeer, arrow no
                 window.URL.revokeObjectURL(url);
             }
 
-            function onLoad() {
+            function onLoad(event) {
+                console.log(event);
                 reset();
 
                 orderUrl.replace(/[#?&]+([^=&]+)=([^&]*)/gi, function (m, key, value) {
-                    if (["url", "excludeInput", "appendToInput"].includes(key)) {
+                    if (["url", "excludeInput", "appendToInput", "prependToInput"].includes(key)) {
                         params[key].push(decodeURIComponent(value));
                     } else {
                         value = decodeURIComponent(value);
@@ -1607,6 +1643,9 @@ earliest non-supported firefox from ubuntu'12. no visibility observeer, arrow no
 
                 for (var id in params.appendToInput)
                     addToInput(false, params.appendToInput[id]);
+                    
+                for (var id in params.prependToInput)
+                    addToInput(true, params.prependToInput[id]);
 
                 if (params.uniqueInput)
                     uniqueInput();
@@ -1645,9 +1684,7 @@ earliest non-supported firefox from ubuntu'12. no visibility observeer, arrow no
                     setContentOnlyView(true);
                 }
 
-                if (params.viewStart) {
-                    view('input', params.viewStart - 1);
-                }
+                
 
                 if (params.sortStart) {
                     sortStart();
@@ -1656,6 +1693,8 @@ earliest non-supported firefox from ubuntu'12. no visibility observeer, arrow no
                 if (params.slideshowStart) {
                     clearTimeout(slideshowTimeoutId);
                     slideshow();
+                } else if (params.viewStart) {
+                    view('input', params.viewStart - 1);
                 }
 
                 updateEstimate();
@@ -1682,6 +1721,7 @@ earliest non-supported firefox from ubuntu'12. no visibility observeer, arrow no
                 return result.concat(a.length ? a : b);
             }
         </script>
+        <script>onLoad()</script>
     </body>
 </html>
 <!-- Copyright (c) 2024 Nikita Korzhitskii -->

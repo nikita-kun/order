@@ -1,4 +1,4 @@
-/order/manual
+/order/intro
 https://en.m.wikipedia.org/wiki/Information_theory
 https://embed.windy.com/embed.html?zoom=3&level=surface&overlay=temp&product=ecmwf
 https://eyes.nasa.gov/apps/solar-system/#/home?rate=259200
