@@ -2,8 +2,6 @@
 doc view style
 doc interface (button to maximize item to full window, button to minimize item, slideshow button in viewer mode, exit slideshow button, menu button)
 
-slow creation of options, forced reflow, optimize
-
 scrolling in viewer skipping bug, quirks when scrolling and snapping, prevent windows from resizing, width-height attr for object
 reset min/max height/width limits on window resize
 resizer scroller width in feed mode
@@ -16,7 +14,6 @@ styleURL
 tag img stretch or nostretch
 viewer background in manual
 demo images: gifs, svgs
-header URL with viewer different from view: `title= `url=
 
 highlight tags in comments
 
@@ -32,14 +29,10 @@ cors iframe load check? iframe.contentDocument/contentWindow works only on the s
 referer, modify user agent when using order on public lists
 rss load
 
-hide item buttons
-inject style, background
-
-disambiguate "item", "element" in the code
-
-refactor css, 99% etc.
+slow creation of options, forced reflow, optimize
+refactor, disambiguate "item", "element" in the code
+refactor css, pixel offsets
 prettify interface
-
 
 constainerStart/stop, rewrite visibility observer or polyfill
 
@@ -98,1631 +91,1617 @@ earliest non-supported firefox from ubuntu'12. no visibility observeer, arrow no
 -->
 <!DOCTYPE html>
 <html lang="en">
-    <head>
-        <title>Order</title>
-        <meta name="description" content="Order. Presentation of media items: images, websites, text, documents">
-        
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1"><!-- content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0"-->
-        <link rel="icon" type="image/svg+xml" href="data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='50' fill='%235555ff'/%3E%3C/svg%3E">
-        <style>
-            body {
-                touch-action: manipulation;
-                position: relative;
-                --gallerySize: 5;
-                font-size: 20pt;
-                margin: 0;
-                padding: 0;
-                font-family: system-ui, serif, sans;
-            }
-            ::-webkit-scrollbar{
-                display: none;
-            }
-            .verticalFlex{
-                flex-flow: column;
-                flex-direction: column;
-                display: flex;
-                height: 100vh;
-            }
-            .verticalFlex > .option, .feedFlex > .option{
-                /*height: calc(99vh / var(--gallerySize));
-                height: calc(100vh / var(--gallerySize));*/
-                min-height: calc(100vh / var(--gallerySize));
-                max-height: calc(100vh / var(--gallerySize));
-            }
-            .feedFlex{
-                flex-flow: column;
-                flex-direction: column;
-                display: flex;
-                height: 100vh;
-                max-width: 20cm;
-                text-align: center;
-                margin: 0 auto;
-            }
-            .header {
-                overflow: hidden;
-                height: 200px;
-                width: 1%;
-                z-index: -2;
-            }
-            .viewerMenu {
-                position: fixed;
-                background: white;
-                bottom: 20pt;
-                padding: 20px;
-                margin: 0;
-                z-index: 1;
-                right: 0;
-                list-style-type: none;
-                text-align: center;
-                opacity: 0.9;
-            }
-            .modeButton{
-                padding: 0px 10px 0px 10px;
-                cursor: pointer;
-            }
-            .modeButton:hover{
-				        background: #eee;
-            }
-            .snap{
-                scroll-snap-align: start;
-            }
-            .galleryFlex{
-                flex-flow: row;
-                flex-wrap: wrap;
-                display: flex;
-                height: 100vh;
-            }
-            .galleryFlex > .option{
-                overflow: hidden;
-                /*width: calc(99vw / var(--gallerySize));
-                width: calc(100vw / var(--gallerySize));*/
-                min-width: calc(100vw / var(--gallerySize));
-                max-width: calc(100vw / var(--gallerySize));
-                min-height: calc(100vw * 9  / 16 / var(--gallerySize));
-                /*max-height: calc(100vw * 9  / 16 / var(--gallerySize));*/
-            }
-            .galleryFlex .container{
-                /*height: calc(99 * 9vw  / 16 / var(--gallerySize));
-                min-height: calc(100vw * 9  / 16 / var(--gallerySize));
-                height: calc(100vw * 9  / 16 / var(--gallerySize));*/
-                min-width: calc(100vw / var(--gallerySize));
-                max-width: calc(100vw / var(--gallerySize));
-            }
-            .contentOnly .optionButtons{
-                display: none;
-            }
-            .contentOnly .optionDetails{
-                display: none;
-            }
-            .horizontalFlex{
-                flex-direction: row;
-                flex-flow: row;
-                display: flex;
-                height: 100%;
-            }
-            .horizontalFlex > .option{
-                overflow: hidden;
-                /*width: calc(100vw / var(--gallerySize) + 1px);
-                min-width: calc(100vw / var(--gallerySize) + 1px);
-                max-width: calc(100vw / var(--gallerySize) + 1px);*/
-                min-width: calc(100vw / var(--gallerySize));
-                max-width: calc(100vw / var(--gallerySize));
-                min-height: 100vh;
-            }
-            .cornerButton {
-                position: fixed;
-                bottom: 0;
-                right: 0;
-                height: 7mm;
-                width: 7mm;
-                z-index: 1;
-            }
-            .cornerLeft{
-                left: 0;
-            }
-            .cornerButton.cornerLeft{
-                left: -1px;
-                transform: matrix(-1, 0, 0, 1, 0, 0);
-            }
-            .cornerButton.cornerTop{
-                top: -1px;
-                transform: matrix(1, 0, 0, -1, 0, 0);
-            }
-            .cornerButton.cornerTopLeft{
-                top: -1px;
-                left: -1px;
-                transform: matrix(-1, 0, 0, -1, 0, 0);
-            }
-            .option .cornerButton {
-                position: absolute;
-                right: -1px;
-                bottom: -1px;
-                overflow: hidden;
-                height: 7mm;
-                width: 7mm;
-            }
-            .nested {
-                transform: translateX(-20px)
-            }
-            .gradientDark{
-                background: red;
-                background: linear-gradient(135deg, rgba(0,0,0,0) 50%, rgba(255,255,255,1) 100%);
-            }
-            .gradientLight{
-                background: red;
-                background: linear-gradient(135deg, rgba(255,255,255,0) 50%, rgba(0,0,0,1) 100%);
-            }
-            .cornerButton:hover {
-                backdrop-filter: invert(1);
-            }
-            .option{
-                flex: 0 0 auto;
-                display: flex;
-                position: relative;
-                flex-flow: column;
-                max-height: 100vh;
-                user-select: none;
-                background: inherit;
-            }
-            .tint {
-                background-color: #eee;
-            }
-            .light {
-                background: white;
-            }
-            .dark {
-                background: black;
-            }
-            .optionContents{
-                display: flex;
-                flex-grow: 1;
-                flex-direction: column;
-                min-height: 100%;
-                min-width: 100%;
-                max-height: 100%;
-                max-width: 100%;
-            }
-            button{
-            	font-family: inherit;
-            }
-            .optionButtons{
-                display: flex;
-                padding: 8pt;
-                flex-direction: row;
-                flex-wrap: wrap;
-                justify-content: flex-start;
-            }
-            i.comment{
-                white-space: nowrap;
-                overflow: hidden;
-                text-overflow: ellipsis;
-                width: 100%;
-                font-size: 60%;
-            }
-            .optionContents.nocomment i.comment{
-                display:none;
-            }
-            .optionPlaintext{
-                margin: 10px;
-                text-align: center;
-            }
-            #slideshow .optionPlaintext{
-                color: white;
-                background: black;
-                overflow: hidden;
-            }
-            #slide{
-                overflow: hidden;
-                transition: opacity 3s;
-            }
-            #slide > object {
-                cursor: none;
-                width: 100%;
-            }
-            #curtain{
-                z-index: 10;
-                pointer-events: none;
-            }
-            .optionDetails{
-                display: flex;
-                flex-direction: column;
-                text-align: center;
-            }
-            .optionDetails > div{
-                width: 100%;
-            }
-            .optionDetails > a{
-                display: inline;
-            }
-            img.container{
-                overflow: hidden;
-                flex: 1 1 auto;
-                object-fit: contain;
-            }
-            img.container.fullscreen{
-                background: white;
-            }
-            video.container{
-                overflow: auto;
-                flex: 1 1 auto;
-                width: 100%;
-                background: black;
-                object-fit: contain;
-            }
-            object.container{
-                cursor: none;
-                /*height: 100vh; ?*/
-                flex: 1 1 auto;
-                background: white;
-            }
-            iframe.container{
-                cursor: none;
-                /***height: 100%;
-                width: 100%;*/
-                flex: 1 1 auto;
-                background: white;
-                border: none;
-            }
-            .container{
-            	/*min-height: 100%;*/
-            	max-height: 100%;
-            	min-width: 100%;
-            	max-width: 100%;
-                opacity: 0.001%;
-                transition: opacity 2s;
-                overflow: scroll;
-                flex: 1;
-            }
-            .container.fullscreen{
-                position: fixed;
-                top: 0;
-                left: 0;
-                min-width: 100vw;
-                min-height: 100vh;
-                max-width: 100vw;
-                max-height: 100vh;
-                z-index: 2;
-                opacity: 1;
-            }
-            object:hover{
-                cursor: auto;
-            }
-            #containerStopButton{
-                z-index: 5;
-            }
-            .fullwidth{
-                position: absolute;
-                top: 0;
-                left: 0;
-                width: 100%;
-            }
-            .fullheight{
-                height: 100vh;
-            }
-            .absolute{
-                position: absolute;
-                top: 0;
-                left: 0;
-            }
-            .mainMenu{
-                bottom:0;
-                left: 0;
-                max-height: 50%;
-                overflow: scroll;
-                margin: 0;
-                display: flex;
-                flex-wrap: wrap;
-                justify-content: center;
-                padding: 0;
-            }
-            .mainMenu>li{
-                font-size: 12pt;
-                display: inline-block;
-                margin: 10px;
-                border: 1px solid black;
-                cursor: pointer;
-                padding: 10px;
-                user-select: none !important;
-            }
-            .liButton:hover{
-            	background: #eee;
-            	cursor: default;
-            }
-            #slideshow{
-                z-index: 3;
-            }
-            #slideshowMenu{
-                position: fixed;
-                width: fit-content;
-                bottom: 0;
-                right: 0;
-                margin-top: 75px;
-                list-style-type: none;
-                text-align: center;
-                padding: 20px;
-                opacity: 0.9;
-            }
-            #slideLink{
-            	text-decoration: none;
-            }
-            #comparator{
-                z-index: 0;
-                display: flex;
-                align-content: space-between;
-                justify-content: space-around;
-                align-items: center;
-            }
-            #viewer{
-                z-index: 2;
-                scroll-snap-type: both mandatory;
-                overflow: hidden;
-                overflow-y: scroll;
-                overflow-x: scroll;
-                min-height: 100vh;
-                width: 100vw;
-            }
-            #viewerTitle{
-                margin: 0;
-            }
-            #viewerInner{
-                position: relative;
-                z-index: 1;
-            }
-            #console{
-                height: 100vh;
-                flex-direction: column;
-                display: flex;
-                z-index: 1;
-            }
-            .justify{
-                display: flex;
-                justify-content: center;
-                align-items: center;
-            }
-            .comparatorChoice {
-                padding: 3vmin;
-                width: 40%;
-                height: 90vmin;
-                color: black;
-                user-select: none !important;
-                display: flex;
-                justify-content: center;
-                overflow: hidden;
-            }
-            .left {
-                float: left;
-            }
-            .right {
-                float: right;
-            }
-            .list {
-                padding: 30px;
-                margin: 15px;
-                margin-bottom: 5px;
-                width: 100%;
-            }
-            ul {
-            	cursor: default;
-            }
-            #data{
-                flex-grow: 1;
-                display: flex;
-                width: 100%;
-            }
-            [hidden] {
-                display: none !important;
-            }
-            @keyframes spectrum {
-                0% {
-                    filter: invert(1) hue-rotate(90deg);
-                }
-                100% {
-                    filter: invert(1) hue-rotate(450deg);
-                }
-            }
-            .spectrum {
-                animation: spectrum 35s linear infinite;
-            }
-            .flip {
-                transform: matrix(-1, 0, 0, 1, 0, 0);
-            }
-        </style>
-    </head>
-    <body> 
+	<head>
+		<title>Order</title>
+		<meta name="description" content="Order. Presentation of media items: images, websites, text, documents">
 
-        <div id='comparator' class='fullwidth fullheight light'>
-            <div id='A' class='option comparatorChoice tint left'></div>
-            <div id='B' class='option comparatorChoice tint right'></div>
-            <div class="cornerButton gradientLight" alt="Show console" onclick='setConsoleVisible(true)'></div>
-        </div>
+		<meta charset="UTF-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1"><!-- content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0"-->
+		<link rel="icon" type="image/svg+xml" href="data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='50' fill='%235555ff'/%3E%3C/svg%3E">
+		<style>
+			body {
+				touch-action: manipulation;
+				position: relative;
+				--gallerySize: 5;
+				font-size: 20pt;
+				margin: 0;
+				padding: 0;
+				font-family: system-ui, serif, sans;
+			}
+			::-webkit-scrollbar{
+				display: none;
+			}
+			.verticalFlex{
+				flex-flow: column;
+				flex-direction: column;
+				display: flex;
+				height: 100vh;
+			}
+			.verticalFlex > .option, .feedFlex > .option{
+				min-height: calc(100vh / var(--gallerySize));
+				max-height: calc(100vh / var(--gallerySize));
+			}
+			.feedFlex{
+				flex-flow: column;
+				flex-direction: column;
+				display: flex;
+				height: 100vh;
+				max-width: 20cm;
+				text-align: center;
+				margin: 0 auto;
+			}
+			.header {
+				overflow: hidden;
+				height: 200px;
+				width: 1%;
+				z-index: -2;
+			}
+			.viewerMenu {
+				position: fixed;
+				background: white;
+				bottom: 20pt;
+				padding: 20px;
+				margin: 0;
+				z-index: 1;
+				right: 0;
+				list-style-type: none;
+				text-align: center;
+				opacity: 0.9;
+			}
+			.modeButton{
+				padding: 0px 10px 0px 10px;
+				cursor: pointer;
+			}
+			.modeButton:hover{
+				background: #eee;
+			}
+			.snap{
+				scroll-snap-align: start;
+			}
+			.galleryFlex{
+				flex-flow: row;
+				flex-wrap: wrap;
+				display: flex;
+				height: 100vh;
+			}
+			.galleryFlex > .option{
+				overflow: hidden;
+				min-width: calc(100vw / var(--gallerySize));
+				max-width: calc(100vw / var(--gallerySize));
+				min-height: calc(100vw * 9 / 16 / var(--gallerySize));
+			}
+			.galleryFlex .container{
+				min-width: calc(100vw / var(--gallerySize));
+				max-width: calc(100vw / var(--gallerySize));
+			}
+			.contentOnly .optionButtons{
+				display: none;
+			}
+			.contentOnly .optionDetails{
+				display: none;
+			}
+			.horizontalFlex{
+				flex-direction: row;
+				flex-flow: row;
+				display: flex;
+				height: 100%;
+			}
+			.horizontalFlex > .option{
+				overflow: hidden;
+				min-width: calc(100vw / var(--gallerySize));
+				max-width: calc(100vw / var(--gallerySize));
+				min-height: 100vh;
+			}
+			.cornerButton {
+				position: fixed;
+				bottom: 0;
+				right: 0;
+				height: 7mm;
+				width: 7mm;
+				z-index: 1;
+			}
+			.cornerLeft{
+				left: 0;
+			}
+			.cornerButton.cornerLeft{
+				left: -1px;
+				transform: matrix(-1, 0, 0, 1, 0, 0);
+			}
+			.cornerButton.cornerTop{
+				top: -1px;
+				transform: matrix(1, 0, 0, -1, 0, 0);
+			}
+			.cornerButton.cornerTopLeft{
+				top: -1px;
+				left: -1px;
+				transform: matrix(-1, 0, 0, -1, 0, 0);
+			}
+			.option .cornerButton {
+				position: absolute;
+				right: -1px;
+				bottom: -1px;
+				overflow: hidden;
+				height: 7mm;
+				width: 7mm;
+			}
+			.nested {
+				transform: translateX(-20px)
+			}
+			.gradientDark{
+				background: red;
+				background: linear-gradient(135deg, rgba(0,0,0,0) 50%, rgba(255,255,255,1) 100%);
+			}
+			.gradientLight{
+				background: red;
+				background: linear-gradient(135deg, rgba(255,255,255,0) 50%, rgba(0,0,0,1) 100%);
+			}
+			.cornerButton:hover {
+				backdrop-filter: invert(1);
+			}
+			.option{
+				flex: 0 0 auto;
+				display: flex;
+				position: relative;
+				flex-flow: column;
+				max-height: 100vh;
+				user-select: none;
+				background: inherit;
+			}
+			.tint {
+				background-color: #eee;
+			}
+			.light {
+				background: white;
+			}
+			.dark {
+				background: black;
+			}
+			.optionContents{
+				display: flex;
+				flex-grow: 1;
+				flex-direction: column;
+				min-height: 100%;
+				min-width: 100%;
+				max-height: 100%;
+				max-width: 100%;
+			}
+			button{
+				font-family: inherit;
+			}
+			.optionButtons{
+				display: flex;
+				padding: 8pt;
+				flex-direction: row;
+				flex-wrap: wrap;
+				justify-content: flex-start;
+			}
+			i.comment{
+				white-space: nowrap;
+				overflow: hidden;
+				text-overflow: ellipsis;
+				width: 100%;
+				font-size: 60%;
+			}
+			.optionContents.nocomment i.comment{
+				display:none;
+			}
+			.optionPlaintext{
+				margin: 10px;
+				text-align: center;
+			}
+			#slideshow .optionPlaintext{
+				color: white;
+				background: black;
+				overflow: hidden;
+			}
+			#slide{
+				overflow: hidden;
+				transition: opacity 3s;
+			}
+			#slide > object {
+				cursor: none;
+				width: 100%;
+			}
+			#curtain{
+				z-index: 10;
+				pointer-events: none;
+			}
+			.optionDetails{
+				display: flex;
+				flex-direction: column;
+				text-align: center;
+			}
+			.optionDetails > div{
+				width: 100%;
+			}
+			.optionDetails > a{
+				display: inline;
+			}
+			.optionLinkContainer{
+				white-space: nowrap;
+				overflow: hidden;
+				text-overflow: ellipsis;
+			}
+			img.container{
+				overflow: hidden;
+				flex: 1 1 auto;
+				object-fit: contain;
+			}
+			img.container.fullscreen{
+				background: white;
+			}
+			video.container{
+				overflow: auto;
+				flex: 1 1 auto;
+				width: 100%;
+				background: black;
+				object-fit: contain;
+			}
+			object.container{
+				cursor: none;
+				/*height: 100vh; ?*/
+				flex: 1 1 auto;
+				background: white;
+			}
+			iframe.container{
+				cursor: none;
+				flex: 1 1 auto;
+				background: white;
+				border: none;
+			}
+			.container{
+				max-height: 100%;
+				min-width: 100%;
+				max-width: 100%;
+				opacity: 0.001%;
+				transition: opacity 2s;
+				overflow: scroll;
+				flex: 1;
+			}
+			.container.fullscreen{
+				position: fixed;
+				top: 0;
+				left: 0;
+				min-width: 100vw;
+				min-height: 100vh;
+				max-width: 100vw;
+				max-height: 100vh;
+				z-index: 2;
+				opacity: 1;
+			}
+			object:hover{
+				cursor: auto;
+			}
+			#containerStopButton{
+				z-index: 5;
+			}
+			.fullwidth{
+				position: absolute;
+				top: 0;
+				left: 0;
+				width: 100%;
+			}
+			.fullheight{
+				height: 100vh;
+			}
+			.absolute{
+				position: absolute;
+				top: 0;
+				left: 0;
+			}
+			.mainMenu{
+				bottom:0;
+				left: 0;
+				max-height: 50%;
+				overflow: scroll;
+				margin: 0;
+				display: flex;
+				flex-wrap: wrap;
+				justify-content: center;
+				padding: 0;
+			}
+			.mainMenu>li{
+				font-size: 12pt;
+				display: inline-block;
+				margin: 10px;
+				border: 1px solid black;
+				cursor: pointer;
+				padding: 10px;
+				user-select: none !important;
+			}
+			.liButton:hover{
+				background: #eee;
+				cursor: default;
+			}
+			#slideshow{
+				z-index: 3;
+			}
+			#slideshowMenu{
+				position: fixed;
+				width: fit-content;
+				bottom: 0;
+				right: 0;
+				margin-top: 75px;
+				list-style-type: none;
+				text-align: center;
+				padding: 20px;
+				opacity: 0.9;
+			}
+			#slideLink{
+				text-decoration: none;
+			}
+			#comparator{
+				z-index: 0;
+				display: flex;
+				align-content: space-between;
+				justify-content: space-around;
+				align-items: center;
+			}
+			#viewer{
+				z-index: 2;
+				scroll-snap-type: both mandatory;
+				overflow: hidden;
+				overflow-y: scroll;
+				overflow-x: scroll;
+				min-height: 100vh;
+				width: 100vw;
+			}
+			#viewerTitle{
+				margin: 0;
+			}
+			#viewerInner{
+				position: relative;
+				z-index: 1;
+			}
+			#console{
+				height: 100vh;
+				flex-direction: column;
+				display: flex;
+				z-index: 1;
+			}
+			.justify{
+				display: flex;
+				justify-content: center;
+				align-items: center;
+			}
+			.comparatorChoice {
+				padding: 3vmin;
+				width: 40%;
+				height: 90vmin;
+				color: black;
+				user-select: none !important;
+				display: flex;
+				justify-content: center;
+				overflow: hidden;
+			}
+			.left {
+				float: left;
+			}
+			.right {
+				float: right;
+			}
+			.list {
+				padding: 30px;
+				margin: 15px;
+				margin-bottom: 5px;
+				width: 100%;
+			}
+			ul {
+				cursor: default;
+			}
+			#data{
+				flex-grow: 1;
+				display: flex;
+				width: 100%;
+			}
+			[hidden] {
+				display: none !important;
+			}
+			@keyframes spectrum {
+				0% {
+					filter: invert(1) hue-rotate(90deg);
+				}
+				100% {
+					filter: invert(1) hue-rotate(450deg);
+				}
+			}
+			.spectrum {
+				animation: spectrum 35s linear infinite;
+			}
+			.flip {
+				transform: matrix(-1, 0, 0, 1, 0, 0);
+			}
+		</style>
+	</head>
+	<body> 
+		<div id='comparator' class='fullwidth fullheight light'>
+			<div id='A' class='option comparatorChoice tint left'></div>
+			<div id='B' class='option comparatorChoice tint right'></div>
+			<div class="cornerButton gradientLight" alt="Show console" onclick='setConsoleVisible(true)'></div>
+		</div>
 
-        <div id='viewer' class='absolute light' hidden>
-            <div id='viewerInner'>
-                <ul id="viewerMenu" class="viewerMenu viewerScroller" hidden>
-                    <h2 id="viewerTitle"></h2>
-                    <li>
-                        <input id='gallerySize' type='range' min=1 max=10 step=1 value=5 onchange="setGallerySize(this.value)"/>
-                        <b class='modeButton' onclick="setGallerySize(2); setContentOnlyView(false); setViewMode('feed');"><svg style="transform: rotate(90deg);" viewBox="0 40 100 100" width="15px" height="15px"><path d="m5 115v-50" stroke="#000" stroke-width="7"/><path d="m45 115v-50" stroke="#000" stroke-width="7"/><path d="m85 115v-50" stroke="#000" stroke-width="7"/><path d="m125 115v-50" stroke="#000" stroke-width="7"/></svg></b>
-                        <b class='modeButton' onclick="setViewMode('vertical')"><svg style="transform: rotate(90deg);" viewBox="0 20 100 100" width="15px" height="15px"><path d="m5 165v-160" stroke="#000" stroke-width="9"/><path d="m45 165v-160" stroke="#000" stroke-width="9"/><path d="m85 165v-160" stroke="#000" stroke-width="9"/><path d="m125 165v-160" stroke="#000" stroke-width="9"/></svg></b>
-                        <b class='modeButton' onclick="setViewMode('horizontal')"><svg  viewBox="-5 0 100 100" width="15px" height="15px"><path d="m5 165v-160" stroke="#000" stroke-width="9"/><path d="m45 165v-160" stroke="#000" stroke-width="9"/><path d="m85 165v-160" stroke="#000" stroke-width="9"/><path d="m125 165v-160" stroke="#000" stroke-width="9"/></svg></b>
-                        <b class='modeButton' onclick="setViewMode('gallery')"><svg width="15px" height="15px" viewBox="-.5 -.5 171 171"><g pointer-events="all" stroke="#000"><rect width="70" height="70"/><rect x="100" width="70" height="70"/><rect y="100" width="70" height="70"/><rect x="100" y="100" width="70" height="70"/></g></svg></b>
-                    </li>
-                    <li class="liButton" onclick="setContentOnlyView()">Details</li>
-                    <!--<li class="liButton" onclick="window.open(orderUrl, '_blank')">Duplicate window</li>-->
-                    <li class="liButton" id="viewerAddTag" onclick="addTag()">Add tag</li>
-                    <li class="liButton" id="viewerImportTags" onclick="importTags()">Import tags</li>
-                    <li class="liButton" onclick="viewerFullscreenToggle()">Fullscreen</li>
-                    <li class="liButton" onclick="fadeCallback(slideshow); viewerFullscreenToggle(true);">Slideshow</li>
-                    <li class="liButton" onclick="navigator.clipboard.writeText(listStringify(currentList))">Copy input</li>
-                    <li class="liButton" onclick="closeViewer();">Main menu</li>
-                </ul>
+		<div id='viewer' class='absolute light' hidden>
+			<div id='viewerInner'>
+				<ul id="viewerMenu" class="viewerMenu viewerScroller" hidden>
+					<h2 id="viewerTitle"></h2>
+					<li>
+						<input id='gallerySize' type='range' min=1 max=10 step=1 value=5 onchange="setGallerySize(this.value)"/>
+						<b class='modeButton' onclick="setGallerySize(2); setContentOnlyView(false); setViewMode('feed');"><svg style="transform: rotate(90deg);" viewBox="0 40 100 100" width="15px" height="15px"><path d="m5 115v-50" stroke="#000" stroke-width="7"/><path d="m45 115v-50" stroke="#000" stroke-width="7"/><path d="m85 115v-50" stroke="#000" stroke-width="7"/><path d="m125 115v-50" stroke="#000" stroke-width="7"/></svg></b>
+						<b class='modeButton' onclick="setViewMode('vertical')"><svg style="transform: rotate(90deg);" viewBox="0 20 100 100" width="15px" height="15px"><path d="m5 165v-160" stroke="#000" stroke-width="9"/><path d="m45 165v-160" stroke="#000" stroke-width="9"/><path d="m85 165v-160" stroke="#000" stroke-width="9"/><path d="m125 165v-160" stroke="#000" stroke-width="9"/></svg></b>
+						<b class='modeButton' onclick="setViewMode('horizontal')"><svg viewBox="-5 0 100 100" width="15px" height="15px"><path d="m5 165v-160" stroke="#000" stroke-width="9"/><path d="m45 165v-160" stroke="#000" stroke-width="9"/><path d="m85 165v-160" stroke="#000" stroke-width="9"/><path d="m125 165v-160" stroke="#000" stroke-width="9"/></svg></b>
+						<b class='modeButton' onclick="setViewMode('gallery')"><svg width="15px" height="15px" viewBox="-.5 -.5 171 171"><g pointer-events="all" stroke="#000"><rect width="70" height="70"/><rect x="100" width="70" height="70"/><rect y="100" width="70" height="70"/><rect x="100" y="100" width="70" height="70"/></g></svg></b>
+					</li>
+					<li class="liButton" onclick="setContentOnlyView()">Details</li>
+					<!--<li class="liButton" onclick="window.open(orderUrl, '_blank')">Duplicate window</li>-->
+					<li class="liButton" id="viewerAddTag" onclick="addTag()">Add tag</li>
+					<li class="liButton" id="viewerImportTags" onclick="importTags()">Import tags</li>
+					<li class="liButton" onclick="viewerFullscreenToggle()">Fullscreen</li>
+					<li class="liButton" onclick="fadeCallback(slideshow); viewerFullscreenToggle(true);">Slideshow</li>
+					<li class="liButton" onclick="navigator.clipboard.writeText(listStringify(currentList))">Copy input</li>
+					<li class="liButton" onclick="closeViewer();">Main menu</li>
+				</ul>
 
-                <div id='viewerOptions' class='horizontalFlex viewerScroller'></div>
-                <div id='viewerStartSlideshowButton' class="cornerButton cornerLeft gradientLight viewerScroller" alt="Start slideshow" onclick="fadeCallback(slideshow); viewerFullscreenToggle(true);"></div>
-                <div id='viewerMenuButton' class="cornerButton gradientLight viewerScroller" alt="Viewer menu" onclick='viewerMenu()'></div>
-            </div>
-        </div>
+				<div id='viewerOptions' class='horizontalFlex viewerScroller'></div>
+				<div id='viewerStartSlideshowButton' class="cornerButton cornerLeft gradientLight viewerScroller" alt="Start slideshow" onclick="fadeCallback(slideshow); viewerFullscreenToggle(true);"></div>
+				<div id='viewerMenuButton' class="cornerButton gradientLight viewerScroller" alt="Viewer menu" onclick='viewerMenu()'></div>
+			</div>
+		</div>
 
-        <div id="containerStopButton" class="cornerButton gradientDark cornerTopLeft" onclick="containerFullscreenStop()" alt="Stop fullscreen" hidden></div>
+		<div id="containerStopButton" class="cornerButton gradientDark cornerTopLeft" onclick="containerFullscreenStop()" alt="Stop fullscreen" hidden></div>
 
-        <div id='curtain' class='fullwidth fullheight dark'></div>
-        
-        <div id='slideshow' class='fullwidth fullheight dark' hidden>
-            <div id='slide' class='option fullheight justify'></div>
-            <ul id='slideshowMenu' class='light' hidden>
-                <li>
-                  <input type='range' min=5 max=300 step=5 value=30 onchange="params.slideshowDelay=this.value; document.querySelector('#slideshowDelay').innerHTML=this.value+' sec'"/>
-                  <b class="liButton" id='slideshowDelay'></b>
-                </li>
-                <li class="liButton" onclick="slideshow('input', currentShowId + 1)">Next slide</li>
-                <li class="liButton" onclick="slideshow('input', -1)">Previous slide</li>
-                <li class="liButton" onclick="slideshowMenu(true)">Pause slideshow</li>
-                <li class="liButton" ><a id="slideLink" target="_blank" href="#">Open slide link</a></li>
-                <!--<li class="liButton" ><a style="unset:all" onclick="window.open(orderUrl, '_blank')">Duplicate window</a></li>-->
-                <li class="liButton" onclick="slideshowMenu(); slideshowStop();">Main menu</li>
-                <li class="liButton" onclick="slideshowMenu(); slideshowStop(view);">Viewer</li>
-            </ul>
-            <div class="cornerButton gradientDark cornerTopLeft" onclick="slideshowStop(view)" onmousewheel="slideshowScroll(event)" onwheel="slideshowScroll(event)" alt="Stop slideshow and go to viewer"></div>
-            <div id="slideshowMenuButton" class="cornerButton gradientDark" alt="Slideshow menu" onmouseenter="slideshowMenu()" onclick="slideshowMenu()"></div>
-        </div>
+		<div id='curtain' class='fullwidth fullheight dark'></div>
 
-        <div id='console' class='fullwidth fullheight light'>
-            <div id='data'>
-                <textarea id='input' class='list left' wrap='off' onkeypress='updateEstimate()' onchange='updateEstimate()' ondblclick='this.wrap = (this.wrap === "soft" ? "off" : "soft")' placeholder='Input'></textarea>
-                <textarea id='tags' hidden>Favorite</textarea>
-                <textarea id='output' class='list right' wrap='off' ondblclick='this.wrap = (this.wrap === "soft" ? "off" : "soft")' placeholder='Output' hidden></textarea>
-                <div id='hideConsoleButton' class="cornerButton gradientLight" alt="Hide console" onclick="setConsoleVisible(false)" hidden></div>
-            </div>
+		<div id='slideshow' class='fullwidth fullheight dark' hidden>
+			<div id='slide' class='option fullheight justify'></div>
+			<ul id='slideshowMenu' class='light' hidden>
+				<li>
+					<input type='range' min=5 max=300 step=5 value=30 onchange="params.slideshowDelay=this.value; document.querySelector('#slideshowDelay').innerHTML=this.value+' sec'"/>
+					<b class="liButton" id='slideshowDelay'></b>
+				</li>
+				<li class="liButton" onclick="slideshow('input', currentShowId + 1)">Next slide</li>
+				<li class="liButton" onclick="slideshow('input', -1)">Previous slide</li>
+				<li class="liButton" onclick="slideshowMenu(true)">Pause slideshow</li>
+				<li class="liButton" ><a id="slideLink" target="_blank" href="#">Open slide link</a></li>
+				<!--<li class="liButton" ><a style="unset:all" onclick="window.open(orderUrl, '_blank')">Duplicate window</a></li>-->
+				<li class="liButton" onclick="slideshowMenu(); slideshowStop();">Main menu</li>
+				<li class="liButton" onclick="slideshowMenu(); slideshowStop(view);">Viewer</li>
+			</ul>
+			<div class="cornerButton gradientDark cornerTopLeft" onclick="slideshowStop(view)" onmousewheel="slideshowScroll(event)" onwheel="slideshowScroll(event)" alt="Stop slideshow and go to viewer"></div>
+			<div id="slideshowMenuButton" class="cornerButton gradientDark" alt="Slideshow menu" onmouseenter="slideshowMenu()" onclick="slideshowMenu()"></div>
+		</div>
 
-            <ul class="mainMenu">
-                <li onclick="view('input')">View input</li>
-                <li onclick="window.open('?#input=' + encodeURIComponent(document.getElementById('input').value), '_blank')">Embed input</li>
-                <li id='viewOutput' onclick="view('output')">View output</li>
-                <li onclick="view('tags')">View tags</li>
-                <li onclick="files.click()">Load files</li>
-                <li onclick="listFile.click()">Load list</li>
-                <li onclick="downloadInput()">Save list</li>
-                <li onclick="filterInput(false)">Filter input</li>
-                <li onclick="filterInput(true)">Filter comments</li>
-                <li onclick="regexp()">RegExp</li>
-                <li onclick="addToInput(true)">Prepend</li>
-                <li onclick="addToInput()">Append</li>
-                <li onclick="replaceInput()">Replace</li>
-                <li onclick="excludeInput()">Exclude</li>
-                <li onclick="uniqueInput()">Unique</li>
-                <li onclick="lexicInput()">Lexic order</li>
-                <li onclick="reverseInput()">Reverse</li>
-                <li onclick="shuffleInput()">Shuffle</li>
-                <li onclick="fadeCallback(slideshow); viewerFullscreenToggle(true);">Slideshow</li>
-                <li id="restartButton" onclick="sortStart()"></li>
-                <input hidden id="files" type="file" multiple/>
-                <input hidden id="list" type="file"/>
-            </ul>
-        </div>
-        <script>
-            var params, comparisons, tags;
-            var currentList, currentElement, currentShowId , currentSlideDelay;
-            var slideshowHistory, slideshowTimeoutId, sortStartTime;
-            var entryObserver;
-            var lastViewerScrollPosition = [0,0], viewerScrollingNextUpdate;
-            //setInterval(()=>{console.log('isScrolling',isViewerScrolling())},1000)
-            
-            var orderUrl = window.location.href;
-            var files = document.getElementById("files");
-            var listFile = document.getElementById("list");
-            
-            window.addEventListener('message', (event) => {
-                if (event.origin !== this.window.origin)
-                    return;
-                if (event.data.dataOrderParams) {
-                    orderUrl = "?" + "#" + event.data.dataOrderParams;
-                    onLoad();
-                }
-            });
+		<div id='console' class='fullwidth fullheight light'>
+			<div id='data'>
+				<textarea id='input' class='list left' wrap='off' onkeypress='updateEstimate()' onchange='updateEstimate()' ondblclick='this.wrap = (this.wrap === "soft" ? "off" : "soft")' placeholder='Input'></textarea>
+				<textarea id='tags' hidden>Favorite</textarea>
+				<textarea id='output' class='list right' wrap='off' ondblclick='this.wrap = (this.wrap === "soft" ? "off" : "soft")' placeholder='Output' hidden></textarea>
+				<div id='hideConsoleButton' class="cornerButton gradientLight" alt="Hide console" onclick="setConsoleVisible(false)" hidden></div>
+			</div>
 
-            //window.addEventListener('load', onLoad);
-            document.addEventListener("fullscreenchange", fullscreenChanged);
+			<ul class="mainMenu">
+				<li onclick="view('input')">View input</li>
+				<li onclick="window.open('?#input=' + encodeURIComponent(document.getElementById('input').value), '_blank')">Embed input</li>
+				<li id='viewOutput' onclick="view('output')">View output</li>
+				<li onclick="view('tags')">View tags</li>
+				<li onclick="files.click()">Load files</li>
+				<li onclick="listFile.click()">Load list</li>
+				<li onclick="downloadInput()">Save list</li>
+				<li onclick="filterInput(false)">Filter input</li>
+				<li onclick="filterInput(true)">Filter comments</li>
+				<li onclick="regexp()">RegExp</li>
+				<li onclick="addToInput(true)">Prepend</li>
+				<li onclick="addToInput()">Append</li>
+				<li onclick="replaceInput()">Replace</li>
+				<li onclick="excludeInput()">Exclude</li>
+				<li onclick="uniqueInput()">Unique</li>
+				<li onclick="lexicInput()">Lexic order</li>
+				<li onclick="reverseInput()">Reverse</li>
+				<li onclick="shuffleInput()">Shuffle</li>
+				<li onclick="fadeCallback(slideshow); viewerFullscreenToggle(true);">Slideshow</li>
+				<li id="restartButton" onclick="sortStart()"></li>
+			</ul>
+
+			<input hidden id="files" type="file" multiple/>
+			<input hidden id="list" type="file"/>
+		</div>
+		<script>
+			var params, comparisons, tags;
+			var currentList, currentElement, currentShowId , currentSlideDelay;
+			var slideshowHistory, slideshowTimeoutId, sortStartTime;
+			var entryObserver;
+			var lastViewerScrollPosition = [0,0], viewerScrollingNextUpdate;
+
+			var orderUrl = window.location.href;
+			var files = document.getElementById("files");
+			var listFile = document.getElementById("list");
+
+			window.addEventListener('message', (event) => {
+				if (event.origin !== this.window.origin)
+					return;
+				if (event.data.dataOrderParams) {
+					orderUrl = "?" + "#" + event.data.dataOrderParams;
+					onLoad();
+				}
+			});
+
+			document.addEventListener("fullscreenchange", fullscreenChanged);
 
 			['wheel', 'mousewheel', 'DOMMouseScroll'].forEach(event => {
 				document.getElementById('viewer').addEventListener(event, viewerScroll);
 			});
-            
-            files.onchange = function (e) {
-                var fileInput = [];
-                for (var i = 0; i < e.target.files.length; i++) {
-                    var file = e.target.files[i];
-                    var fileUrl = URL.createObjectURL(file);
-                    fileInput.push(fileUrl + '`filename=' + file.name);
-                }
-                appendInput(fileInput.join("\n"));
-                onUpdate();
-            };
-            
-            listFile.onchange = function (e) {
-                inputFromUrl(URL.createObjectURL(e.target.files[0]), false);
-            };
 
-            try {
-                entryObserver = new IntersectionObserver(function (entries) {
-                    entries.forEach((e)=>{lazyLoad(e)});
-                }, {threshold: [0.05]});
-            } catch (e) {
-            	console.log(e)
-            }
+			files.onchange = function (e) {
+				var fileInput = [];
+				for (var i = 0; i < e.target.files.length; i++) {
+					var file = e.target.files[i];
+					var fileUrl = URL.createObjectURL(file);
+					fileInput.push(fileUrl + '`filename=' + file.name);
+				}
+				appendInput(fileInput.join("\n"));
+				onUpdate();
+			};
 
-            function reset() {
-                params = {
-                    "title": false,
-                    "input": false,
-                    "url": [],
-                    "slideshowShuffle": 1,
-                    "slideshowDelay": 30,
-                    "slideshowPreTransitionDelay": 5,
-                    "slideshowStart": false,
-                    "gallerySize": 2,
-                    "viewMode": "feed",
-                    "contentOnly": true,
-                    "viewStart": false,
-                    "sortStart": false,
-                    "filterInput": false,
-                    "filterComment": false,
-                    "shuffleInput": false,
-                    "reverseInput": false,
-                    "uniqueInput": false,
-                    "lexicInput": false,
-                    "excludeInput": [],
-                    "appendToInput": [],
-                    "prependToInput": [],
-                    "containerShowDelay": 1,
-                    "nested": false,
-                    "style": false
-                };
+			listFile.onchange = function (e) {
+				inputFromUrl(URL.createObjectURL(e.target.files[0]), false);
+			};
 
-                comparisons = 0;
-                currentList = [];
-                currentElement = '';
-                currentShowId = undefined;
-                currentSlideDelay = undefined;
-                slideshowHistory = [];
-                tags = listParse('tags');
-                clearTimeout(typeof slideshowTimeoutId !== 'undefined' ? slideshowTimeoutId : null);
-                slideshowTimeoutId = 0;
-            }
+			try {
+				entryObserver = new IntersectionObserver(function (entries) {
+					entries.forEach((e)=>{lazyLoad(e);});
+				}, {threshold: [0.05]});
+			} catch (e) {
+				console.error(e);
+			}
 
-            function fadeIn(seconds = 1) {
-                document.getElementById('curtain').style.transition = `opacity ${seconds}s cubic-bezier(0.55, 0.06, 0.68, 0.19)`;
-                document.getElementById('curtain').style.opacity = 0;
-            }
+			function reset() {
+				params = {
+					"title": false,
+					"input": false,
+					"url": [],
+					"slideshowShuffle": 1,
+					"slideshowDelay": 30,
+					"slideshowPreTransitionDelay": 5,
+					"slideshowStart": false,
+					"gallerySize": 2,
+					"viewMode": "feed",
+					"contentOnly": true,
+					"viewStart": false,
+					"sortStart": false,
+					"filterInput": false,
+					"filterComment": false,
+					"shuffleInput": false,
+					"reverseInput": false,
+					"uniqueInput": false,
+					"lexicInput": false,
+					"excludeInput": [],
+					"appendToInput": [],
+					"prependToInput": [],
+					"containerShowDelay": 1,
+					"nested": false,
+					"style": false
+				};
 
-            function fadeOut(seconds = 1) {
-                document.getElementById('curtain').style.transition = `opacity ${seconds}s cubic-bezier(0.55, 0.06, 0.68, 0.19)`;
-                document.getElementById('curtain').style.opacity = 1;
-            }
+				comparisons = 0;
+				currentList = [];
+				currentElement = '';
+				currentShowId = undefined;
+				currentSlideDelay = undefined;
+				slideshowHistory = [];
+				tags = listParse('tags');
+				clearTimeout(typeof slideshowTimeoutId !== 'undefined' ? slideshowTimeoutId : null);
+				slideshowTimeoutId = 0;
+			}
 
-            function fadeCallback(callback, secondsOut = 1, secondsIn = 1, secondsIdle = 2) {
-                fadeOut(secondsOut);
-                setTimeout(callback, (secondsOut + secondsIdle / 2) * 1000);
-                setTimeout(fadeIn, (secondsOut + secondsIn + secondsIdle) * 1000);
-            }
+			function fadeIn(seconds = 1) {
+				document.getElementById('curtain').style.transition = `opacity ${seconds}s cubic-bezier(0.55, 0.06, 0.68, 0.19)`;
+				document.getElementById('curtain').style.opacity = 0;
+			}
 
-            function viewerScroll(event) {
+			function fadeOut(seconds = 1) {
+				document.getElementById('curtain').style.transition = `opacity ${seconds}s cubic-bezier(0.55, 0.06, 0.68, 0.19)`;
+				document.getElementById('curtain').style.opacity = 1;
+			}
 
-                event.preventDefault();
-                if (event.target.classList.contains('contentOnlyTrigger'))
-                	return setContentOnlyView();
-                
-                isViewerScrolling();                
-              
-                const scrollAmount = (params.viewMode == "horizontal" ? window.innerWidth : window.innerHeight) / params.gallerySize * Math.sign(event.deltaY || event.wheelDelta) / 1.5;
-                var scrollParam = {
-                    behavior: 'smooth'
-                }
-                params.viewMode == "horizontal" ? scrollParam.left = scrollAmount : scrollParam.top = scrollAmount;
-                document.getElementById("viewer").scrollBy(scrollParam);
-            }
-            
-            function isViewerScrolling(){
-            
-            	if (viewerScrollingNextUpdate > performance.now())
-            		return true;
-            	
+			function fadeCallback(callback, secondsOut = 1, secondsIn = 1, secondsIdle = 2) {
+				fadeOut(secondsOut);
+				setTimeout(callback, (secondsOut + secondsIdle / 2) * 1000);
+				setTimeout(fadeIn, (secondsOut + secondsIn + secondsIdle) * 1000);
+			}
+
+			function viewerScroll(event) {
+
+				event.preventDefault();
+				if (event.target.classList.contains('contentOnlyTrigger'))
+					return setContentOnlyView();
+
+				isViewerScrolling();
+
+				const scrollAmount = (params.viewMode == "horizontal" ? window.innerWidth : window.innerHeight) / params.gallerySize * Math.sign(event.deltaY || event.wheelDelta) / 1.5;
+				var scrollParam = {
+					behavior: 'smooth'
+				};
+				params.viewMode == "horizontal" ? scrollParam.left = scrollAmount : scrollParam.top = scrollAmount;
+				document.getElementById("viewer").scrollBy(scrollParam);
+			}
+
+			function isViewerScrolling(){
+
+				if (viewerScrollingNextUpdate > performance.now())
+					return true;
+
 				const viewer = document.querySelector('#viewer');
-	        	newViewerScrollPosition = [viewer.scrollLeft, viewer.scrollTop];
+				newViewerScrollPosition = [viewer.scrollLeft, viewer.scrollTop];
 
-	        	const isScrolling = !newViewerScrollPosition.every((value, index) => value === lastViewerScrollPosition[index]);
-	        	lastViewerScrollPosition = newViewerScrollPosition;
-				
+				const isScrolling = !newViewerScrollPosition.every((value, index) => value === lastViewerScrollPosition[index]);
+				lastViewerScrollPosition = newViewerScrollPosition;
+
 				if (isScrolling){
 					viewerScrollingNextUpdate = performance.now() + 500;
 				} 
-				
-            	return isScrolling;
-            	
-            }
-            
-            function optionPresent(id, details = true) {
-                var containerMap = {
-                    "pdf": "object",
-                    "jpg": "img",
-                    "jpeg": "img",
-                    "png": "img",
-                    "gif": "img",
-                    "mov": "video",
-                    "mp4": "video",
-                    "m4v": "video",
-                    "wmv": "video",
-                    "webp": "video",
-                    "mp3": "audio",
-                    "ogg": "audio",
-                    "wav": "audio"
-                };
 
-                var option = currentList[id];
-                option.textReplaced = option.text;
-                var presentation = '';
-                var style = '';
-                var imgArgs = '';
-                var autoplayArgs = '';
-                var sandboxArgs = ['allow-scripts','allow-forms','allow-same-origin','allow-pointer-lock', 'allow-popups', 'allow-downloads', 'allow-modals'];
-                var spectrum = false;
-                var flip = false;
-                var classes = ['container'];
-                var container;
-                var dataSrc = '';
-                var dataOrderParams = '';
-                var text = '';
-                var title = '';
-                var cover = '';
-                var link = '';
-                var filename = '';
-                var extension = '';
+				return isScrolling;
+			}
 
-                for (var i in option.tags) {
-                    switch (true) {
-                        case option.tags[i].startsWith('container='):
-                            container = option.tags[i].split('=').pop();
-                            break;
-                        case option.tags[i].startsWith('style='):
-                            style = option.tags[i].split('=').pop();
-                            break;
-                        case option.tags[i].startsWith('filename='):
-                            filename = option.tags[i].split('=').pop();
-                            break;
-                        case option.tags[i].startsWith('title='):
-                            title = option.tags[i].split('=').pop();
-                            break;
-                        case option.tags[i].startsWith('cover='):
-                            cover = option.tags[i].split('=').pop();
-                            break;
-                        case option.tags[i].startsWith('link='):
-                            link = option.tags[i].split('=').pop();
-                            break;
-                        case option.tags[i].startsWith('spectrum'):
-                            spectrum = true;
-                            break;
-                        case option.tags[i].startsWith('noscript'):
-                            sandboxArgs = sandboxArgs.filter(item => item !== 'allow-scripts');
-                            break;
-                        case option.tags[i].startsWith('topnavigation'):
-                            sandboxArgs.push('allow-top-navigation');
-                            sandboxArgs.push('allow-top-navigation-by-user-activation');
-                            break;
-                        case option.tags[i].startsWith('flip'):
-                            flip = true;
-                            break;
-                        case option.tags[i].startsWith('randflip'):
-                            flip = Math.random() > 0.5;
-                            break;
-                        case option.tags[i].startsWith('rewrite'):
-                            option.tags[i].replace(/[?&]+([^=&]+)=([^&]*)/gi, function (m, key, value) {
-                                //option.textReplaced = option.textReplaced.replace(eval(key), eval(value));
-                                option.textReplaced = option.textReplaced.split(eval(key)).reduce((a,b)=>{return `${a}${eval(value)}${b}`});
-                            });
-                            break;
-                        default:
-                    }
-                }
+			function optionPresent(id, details = true) {
+				var containerMap = {
+					"pdf": "object",
+					"jpg": "img",
+					"jpeg": "img",
+					"png": "img",
+					"gif": "img",
+					"mov": "video",
+					"mp4": "video",
+					"m4v": "video",
+					"wmv": "video",
+					"webp": "video",
+					"mp3": "audio",
+					"ogg": "audio",
+					"wav": "audio"
+				};
 
-                switch (true) {
-                    case option.text.startsWith("https://"):
-                    case option.text.startsWith("blob:"):
-                    case option.text.startsWith("data:"):
-                    case option.text.startsWith("file://"):
-                    case option.text.startsWith("content://"):
-                    case option.text.startsWith("http://"):
-                    case option.text.startsWith("/"):
-                    case option.text.startsWith("#"):
-                        try {
-                            text = ((new URL(link ? link : option.text)).hostname);
-                        } catch (e) {
-                            text = link ? link : option.textReplaced;
-                        }
+				var option = currentList[id];
+				option.textReplaced = option.text;
+				var presentation = '';
+				var style = '';
+				var imgArgs = '';
+				var autoplayArgs = '';
+				var sandboxArgs = ['allow-scripts','allow-forms','allow-same-origin','allow-pointer-lock', 'allow-popups', 'allow-downloads', 'allow-modals'];
+				var spectrum = false;
+				var flip = false;
+				var classes = ['container'];
+				var container;
+				var dataSrc = '';
+				var dataOrderParams = '';
+				var text = '';
+				var title = '';
+				var cover = '';
+				var link = '';
+				var filename = '';
+				var extension = '';
 
-                        if (option.text.startsWith("#"))
-                            text = "#";
-                        else if (text.includes("#"))
-                            text = text.substring(0, option.text.indexOf("#"));
+				for (var i in option.tags) {
+					switch (true) {
+						case option.tags[i].startsWith('container='):
+							container = option.tags[i].split('=').pop();
+							break;
+						case option.tags[i].startsWith('style='):
+							style = option.tags[i].split('=').pop();
+							break;
+						case option.tags[i].startsWith('filename='):
+							filename = option.tags[i].split('=').pop();
+							break;
+						case option.tags[i].startsWith('title='):
+							title = option.tags[i].split('=').pop();
+							break;
+						case option.tags[i].startsWith('cover='):
+							cover = option.tags[i].split('=').pop();
+							break;
+						case option.tags[i].startsWith('link='):
+							link = option.tags[i].split('=').pop();
+							break;
+						case option.tags[i].startsWith('spectrum'):
+							spectrum = true;
+							break;
+						case option.tags[i].startsWith('noscript'):
+							sandboxArgs = sandboxArgs.filter(item => item !== 'allow-scripts');
+							break;
+						case option.tags[i].startsWith('topnavigation'):
+							sandboxArgs.push('allow-top-navigation');
+							sandboxArgs.push('allow-top-navigation-by-user-activation');
+							break;
+						case option.tags[i].startsWith('flip'):
+							flip = true;
+							break;
+						case option.tags[i].startsWith('randflip'):
+							flip = Math.random() > 0.5;
+							break;
+						case option.tags[i].startsWith('rewrite'):
+							option.tags[i].replace(/[?&]+([^=&]+)=([^&]*)/gi, function (m, key, value) {
+								option.textReplaced = option.textReplaced.split(eval(key)).reduce((a,b)=>{return `${a}${eval(value)}${b}`;});
+							});
+							break;
+						default:
+					}
+				}
 
-                        if (!container){
-                            extension = filename ? filename.split(".").pop().toLowerCase() : option.textReplaced.split(".").pop().toLowerCase();
-                            if (containerMap[extension])
-                                container = containerMap[extension];
-                            else
-                                container = 'iframe'; //document.head.querySelector('script') ? 'iframe' : 'object';
-                        }
+				switch (true) {
+					case option.text.startsWith("https://"):
+					case option.text.startsWith("blob:"):
+					case option.text.startsWith("data:"):
+					case option.text.startsWith("file://"):
+					case option.text.startsWith("content://"):
+					case option.text.startsWith("http://"):
+					case option.text.startsWith("/"):
+					case option.text.startsWith("#"):
+						try {
+							text = ((new URL(link ? link : option.text)).hostname);
+						} catch (e) {
+							text = link ? link : option.textReplaced;
+						}
 
-                        if (details)
-                            presentation = `<div class="optionDetails tint">
-                                <div><a target="_blank" rel="noreferrer" href="${link ? link : option.textReplaced}" title="${link ? link : option.textReplaced}">${title ? title : text}</a></div>
-                                <i class="comment" id="comment_${id}" title="${option.comment}">${option.comment}</i>
-                            </div>`;
-                        
-                        if (container === 'img') 
-                            imgArgs = `onclick="containerFullscreenStop()" ondblclick="containerFullscreen(${id})"`;
-                        
-                        if (container !== 'audio')
-                            autoplayArgs = 'autoplay';
-                        
-                        if (spectrum)
-                            classes.push('spectrum');
-                        
-                        if (flip)
-                            classes.push('flip');
-                        
-                        if (text === "#"){
-                            dataSrc = "?";
-                            dataOrderParams = `data-order-params="${option.textReplaced.slice(option.textReplaced.indexOf('#') + 1)}"`;
-                        } else {
-                            dataSrc = option.textReplaced;
-                        }
-                        
-                        presentation += `<${container} 
-                            id="container_${id}" 
-                            num="${id}" 
-                            ${imgArgs} 
-                            ${autoplayArgs} 
-                            allowfullscreen controls credentialless 
-                            sandbox="${sandboxArgs.join(' ')}" 
-                            frameBorder="0" 
-                            class="${classes.join(' ')}" 
-                            allow="autoplay" 
-                            loop 
-                            style="${style}" 
-                            data-src="${dataSrc}" ${dataOrderParams}>
-                        </${container}>`;
-                        break;
-                        
-                    default:
-                        presentation += `<div class="optionPlaintext tint">
-                            <b>${option.textReplaced}</b><br>
-                            <i id="comment_${id}" class="comment">${option.comment}</i>
-                        </div>`;
-                }
+						if (option.text.startsWith("#"))
+							text = "#";
+						else if (text.includes("#"))
+							text = text.substring(0, option.text.indexOf("#"));
 
-                return presentation;
-            }
+						if (!container){
+							extension = filename ? filename.split(".").pop().toLowerCase() : option.textReplaced.split(".").pop().toLowerCase();
+							if (containerMap[extension])
+								container = containerMap[extension];
+							else
+								container = 'iframe';
+						}
 
-            function optionUpdate(id) {
-                document.getElementById("comment_" + id).innerHTML += "`" + tag;
-                document.getElementById("option_" + id).querySelectorAll(".optionDetails,.optionPlaintext,.container").forEach((x) => {
-                    x.remove();
-                });
-                document.getElementById("option_" + id).querySelector(".optionContents").innerHTML += optionPresent(id);
-                observeContainers();
-            }
+						if (details)
+							presentation = `<div class="optionDetails tint">
+								<div class="optionLinkContainer"><a target="_blank" rel="noreferrer" href="${link ? link : option.textReplaced}" title="${link ? link : option.textReplaced}">${title ? title : text}</a></div>
+								<i class="comment" id="comment_${id}" title="${option.comment}">${option.comment}</i>
+							</div>`;
 
-            function inputFromUrl(url, viewOnUpdate = true) {
-                const req = new XMLHttpRequest();
-                req.addEventListener("load", function (event) {
-                    if (event.srcElement.statusText === "OK" || event.srcElement.status == 200) {
-                        appendInput(event.srcElement.responseText.trim());
-                        if (viewOnUpdate)
-                            onUpdate();
-                    }
-                });
-                req.open("GET", url.startsWith('blob') || url.startsWith('file') || url.startsWith('content') || url.includes('example') ? url : url + "?" + Math.random());
-                req.send();
-            }
+						if (container === 'img') 
+							imgArgs = `onclick="containerFullscreenStop()" ondblclick="containerFullscreen(${id})"`;
 
-            function setInput(input) {
-                document.getElementById("input").value = input;
-            }
+						if (container !== 'audio')
+							autoplayArgs = 'autoplay';
 
-            function appendInput(input) {
-                document.getElementById("input").value = document.getElementById("input").value ? document.getElementById("input").value + "\n" + input : input;
-            }
+						if (spectrum)
+							classes.push('spectrum');
 
-            function nestedAdjust() {
-                document.querySelectorAll("div[class='cornerButton gradientDark'],div[class='cornerButton gradientLight'],#slideshowMenu,#viewerMenuButton,#viewerMenu").forEach((x) => {
-                    x.classList.add('cornerLeft');
-                });
-            }
+						if (flip)
+							classes.push('flip');
 
-            function setGallerySize(size) {
-                params.gallerySize = parseInt(size);
-                document.getElementById('gallerySize').value = params.gallerySize;
-                document.getElementById('viewerOptions').style.setProperty('--gallerySize', params.gallerySize);
-            }
+						if (text === "#"){
+							dataSrc = "?";
+							dataOrderParams = `data-order-params="${option.textReplaced.slice(option.textReplaced.indexOf('#') + 1)}"`;
+						} else {
+							dataSrc = option.textReplaced;
+						}
 
-            function setViewMode(mode) {
-                document.getElementById('viewerOptions').className = `${mode}Flex`;
-                params.viewMode = mode;
-                setContentOnlyView(params.contentOnly);
-            }
+						presentation += `<${container} 
+							id="container_${id}" 
+							num="${id}" 
+							${imgArgs} 
+							${autoplayArgs} 
+							allowfullscreen controls credentialless 
+							sandbox="${sandboxArgs.join(' ')}" 
+							frameBorder="0" 
+							class="${classes.join(' ')}" 
+							allow="autoplay" 
+							loop 
+							style="${style}" 
+							data-src="${dataSrc}" ${dataOrderParams}>
+						</${container}>`;
+						break;
 
-            function setContentOnlyView(contentOnly = undefined) {
+					default:
+						presentation += `<div class="optionPlaintext tint">
+							<b>${option.textReplaced}</b><br>
+							<i id="comment_${id}" class="comment">${option.comment}</i>
+						</div>`;
+				}
 
-                params.contentOnly = contentOnly === undefined ? !params.contentOnly : contentOnly;
+				return presentation;
+			}
 
-                if (params.contentOnly) {
-                        document.getElementById('viewerOptions').classList.add('contentOnly');
-                } else {
-                	document.getElementById('viewerOptions').classList.remove('contentOnly');
-                }
-            }
+			function optionUpdate(id) {
+				document.getElementById("comment_" + id).innerHTML += "`" + tag;
+				document.getElementById("option_" + id).querySelectorAll(".optionDetails,.optionPlaintext,.container").forEach((x) => {
+					x.remove();
+				});
+				document.getElementById("option_" + id).querySelector(".optionContents").innerHTML += optionPresent(id);
+				observeContainers();
+			}
 
-            function updateEstimate() {
-                var inputSize = document.getElementById('input').value.split('\n').length;
-                var estimate = Math.floor(inputSize * Math.log(inputSize));
-                document.getElementById('restartButton').innerHTML = `Sort (${inputSize} items, ${estimate} comparisons)`;
-            }
+			function inputFromUrl(url, viewOnUpdate = true) {
+				const req = new XMLHttpRequest();
+				req.addEventListener("load", function (event) {
+					if (event.srcElement.statusText === "OK" || event.srcElement.status == 200) {
+						appendInput(event.srcElement.responseText.trim());
+						if (viewOnUpdate)
+							onUpdate();
+					}
+				});
+				req.open("GET", url.startsWith('blob') || url.startsWith('file') || url.startsWith('content') || url.includes('example') ? url : url + "?" + Math.random());
+				req.send();
+			}
 
-            function setOption(optionElementID, option, details = false) {
-                document.getElementById(optionElementID).innerHTML = optionPresent(option, details);
-                var container =  document.getElementById(optionElementID).firstChild;
-                if (container){
-                    entryObserver.observe(container);
-                    container.ondblclick = false;
-                }
-            }
+			function setInput(input) {
+				document.getElementById("input").value = input;
+			}
 
-            function filterInput(comments = false, search = undefined) {
-                var type = "Filtering by text.";
-                if (comments) {
-                    type = "Filtering by comments and tags.";
-                }
-                
-                if (!search)
-                    search = prompt(`${type} Enter necessary substring:`);
-                if (!search)
-                    return;
+			function appendInput(input) {
+				document.getElementById("input").value = document.getElementById("input").value ? document.getElementById("input").value + "\n" + input : input;
+			}
 
-                search = search.toLowerCase();
-                currentList = listParse('input');
+			function nestedAdjust() {
+				document.querySelectorAll("div[class='cornerButton gradientDark'],div[class='cornerButton gradientLight'],#slideshowMenu,#viewerMenuButton,#viewerMenu").forEach((x) => {
+					x.classList.add('cornerLeft');
+				});
+			}
 
-                for (var i = 0; i < currentList.length; i++) {
-                    var subject = currentList[i].text;
-                    if (comments)
-                        subject = currentList[i].comment;
-                    if (!subject.toLowerCase().includes(search))
-                        delete currentList[i];
-                }
+			function setGallerySize(size) {
+				params.gallerySize = parseInt(size);
+				document.getElementById('gallerySize').value = params.gallerySize;
+				document.getElementById('viewerOptions').style.setProperty('--gallerySize', params.gallerySize);
+			}
 
-                currentList = currentList.flat();
-                document.getElementById('input').value = listStringify(currentList);
-            }
-            //incomplete, gi only
-            function regexp(expression = undefined) {
-                if (!expression)
-                    expression = prompt(`Enter a regular expression (gi):`, `["('](http[s]:\/\/.+)[")']`);
-                if (!expression)
-                    return;
+			function setViewMode(mode) {
+				document.getElementById('viewerOptions').className = `${mode}Flex`;
+				params.viewMode = mode;
+				setContentOnlyView(params.contentOnly);
+			}
 
-                var match, matches = [];
-                var regexp = new RegExp(expression, 'gi');
+			function setContentOnlyView(contentOnly = undefined) {
+
+				params.contentOnly = contentOnly === undefined ? !params.contentOnly : contentOnly;
+
+				if (params.contentOnly) {
+						document.getElementById('viewerOptions').classList.add('contentOnly');
+				} else {
+					document.getElementById('viewerOptions').classList.remove('contentOnly');
+				}
+			}
+
+			function updateEstimate() {
+				var inputSize = document.getElementById('input').value.split('\n').length;
+				var estimate = Math.floor(inputSize * Math.log(inputSize));
+				document.getElementById('restartButton').innerHTML = `Sort (${inputSize} items, ${estimate} comparisons)`;
+			}
+
+			function setOption(optionElementID, option, details = false) {
+				document.getElementById(optionElementID).innerHTML = optionPresent(option, details);
+				var container = document.getElementById(optionElementID).firstChild;
+				if (container){
+					entryObserver.observe(container);
+					container.ondblclick = false;
+				}
+			}
+
+			function filterInput(comments = false, search = undefined) {
+				var type = "Filtering by text.";
+				if (comments) {
+					type = "Filtering by comments and tags.";
+				}
+
+				if (!search)
+					search = prompt(`${type} Enter necessary substring:`);
+				if (!search)
+					return;
+
+				search = search.toLowerCase();
+				currentList = listParse('input');
+
+				for (var i = 0; i < currentList.length; i++) {
+					var subject = currentList[i].text;
+					if (comments)
+						subject = currentList[i].comment;
+					if (!subject.toLowerCase().includes(search))
+						delete currentList[i];
+				}
+
+				currentList = currentList.flat();
+				document.getElementById('input').value = listStringify(currentList);
+			}
+			//incomplete, gi only
+			function regexp(expression = undefined) {
+				if (!expression)
+					expression = prompt(`Enter a regular expression (gi):`, `["('](http[s]:\/\/.+)[")']`);
+				if (!expression)
+					return;
+
+				var match, matches = [];
+				var regexp = new RegExp(expression, 'gi');
 								console.log(expression, regexp);
 								while ((match = regexp.exec(document.getElementById('input').value)) !== null) {
 										console.log(match);
 										matches.push(match[1] ? match[1] : match[0]);
 								}
 
-                document.getElementById('input').value = matches.join('\n');
-            }
-
-            function addToInput(prepend = false, extra = undefined) {
-                var type = "Append text to input.";
-                if (prepend) {
-                    type = "Prepend text to input.";
-                }
-                
-                if (!extra)
-                    extra = prompt(`${type} Enter string:`);
-                if (!extra)
-                    return;
-
-                currentList = listParse('input');
-
-                for (var i = 0; i < currentList.length; i++) {
-                    console.log(currentList[i].text);
-                    currentList[i].text = prepend ? extra + currentList[i].text : currentList[i].text + extra;
-                }
-
-                currentList = currentList.flat();
-                document.getElementById('input').value = listStringify(currentList);
-            }
-
-            function replaceInput(search = undefined, replacement = undefined) {
-                if (!search)
-                    search = prompt("Replace a string:");
-                if (!search)
-                    return;
-
-                if (!replacement)
-                    replacement = prompt(`Replace ${search} with:`);
-                if (replacement === null)
-                    return;
-                
-                document.getElementById('input').value = document.getElementById('input').value.split(JSON.parse(`"${search}"`)).join(JSON.parse(`"${replacement}"`));
-            }
-
-            function excludeInput(search = undefined) {
-                if (!search)
-                    search = prompt("Exclude items that contain:");
-                if (!search)
-                    return;
-
-                var lines = document.getElementById('input').value.split("\n");
-                var filtered = lines.filter(function (str) {
-                    return !str.toLowerCase().includes(search.toLowerCase());
-                });
-                document.getElementById('input').value = Array.from(filtered).join("\n");
-            }
-
-            function uniqueInput() {
-                var lines = document.getElementById('input').value.split("\n");
-                var uniqueLines = new Set(lines);
-
-                document.getElementById('input').value = Array.from(uniqueLines).join("\n");
-            }
-
-            function lexicInput() {
-                var lines = document.getElementById('input').value.split("\n").sort();
-                document.getElementById('input').value = lines.join("\n");
-            }
-
-            function compare(a, b) {
-                comparisons += 1;
-                setOption('A', a);
-                setOption('B', b);
-                
-                return new Promise(resolve => {
-                    document.getElementById('A').onclick = function () {
-                        resolve(true);
-                    };
-                    document.getElementById('B').onclick = function () {
-                        resolve(false);
-                    };
-                    
-                    document.onkeydown = function (event) {
-                        switch (event.key) {
-                            case "ArrowLeft":
-                                resolve(true);
-                                break;
-                            case "ArrowRight":
-                                resolve(false);
-                        }
-                    };
-                });
-            }
-            
-            function shuffleInput() {
-                var a = listParse('input');
-                var b, c, d;
-                c = a.length;
-                while (c)
-                    b = Math.random() * c-- | 0, d = a[c], a[c] = a[b], a[b] = d;
-                document.getElementById('input').value = listStringify(a);
-            }
-            
-            function reverseInput() {
-                var a = listParse('input').reverse();
-                document.getElementById('input').value = listStringify(a);
-            }
-            
-            function sortStart() {
-                comparisons = 0;
-                sortStartTime = Date.now();
-                document.getElementById('output').value = '';
-
-                setConsoleVisible(false);
-                setOptionsVisible(true);
-
-                currentList = listParse('input');
-                var k = Object.keys(currentList);
-
-                mergeSort(k).then(function (x) {
-                    var result = `Sorted in ${comparisons} comparisons, ${Math.ceil((Date.now() - sortStartTime) / (1000 * 60))} minutes`;
-
-                    document.getElementById('output').hidden = false;
-                    document.getElementById('output').value = listStringify(currentList, x);
-                    document.getElementById('output').value += "\n" + result;
-                    
-                    setOptionsVisible(false);
-                    setConsoleVisible(true);
-                });
-            }
-            
-            function setOptionsVisible(visible = true) {
-                document.getElementById('A').hidden = !visible;
-                document.getElementById('B').hidden = !visible;
-            }
-            
-            function setConsoleVisible(visible = true) {
-                document.getElementById('console').hidden = !visible;
-                setComparatorVisible(!visible);
-            }
-            
-            function setComparatorVisible(visible = true) {
-                document.getElementById('hideConsoleButton').hidden = false;
-                document.getElementById('comparator').hidden = !visible;
-            }
-            
-            function remove(id) {
-                currentList[id].removed = true;
-                document.getElementById("option_" + id).remove();
-            }
-            
-            function copy(id) {
-                navigator.clipboard.writeText(listStringify([currentList[id]]))
-            }
-            
-            function edit(id, comment=false) {
-                var input = prompt(`${comment ? "Comment" : "Input"}:`, comment ? currentList[id].comment : currentList[id].text);
-                if (input === null) {
-                    return;
-                }
-                
-                if (comment){
-                	currentList[id].comment = input;
-                	currentList[id].tags = input.split('`');
-                } else {
-                	currentList[id].text = input;
-                }
-                optionUpdate(id);
-            }
-            
-            function tag(id, tag) {
-                currentList[id].comment += "`" + tag;
-                currentList[id].tags.push(tag);
-                optionUpdate(id);
-            }
-            
-            function listParse(element) {
-                var list = [];
-                var a = document.getElementById(element).value ? document.getElementById(element).value.split('\n') : [];
-
-                for (var i = 0; i < a.length; i++) {
-                    var line = a[i].split('`');
-                    list[i] = {"text": line.shift()};
-                    list[i].tags = line;
-                    list[i].comment = line.join("`");
-                }
-                return list;
-            }
-            
-            function listStringify(list, key = null) {
-                var lines = [];
-                
-                for (var i = 0; i < list.length; i++) {
-                    var x = i;
-                    if (key)
-                        x = key[i];
-                    if (list[x].removed)
-                        continue;
-                    var line = list[x].text + (list[x].comment ? '`' + list[x].comment : '').replace('``', '`');
-                    lines.push(line);
-                }
-                
-                return lines.join('\n');
-            }
-
-            function view(element = 'input', scrollToId = 0) {
-                entryObserver.disconnect();
-                
-                while (document.getElementsByClassName("container")[0])
-                    document.getElementsByClassName("container")[0].remove();
-
-                var comments = document.getElementsByClassName('comment');
-                while (comments.length) 
-                    comments[0].parentNode.removeChild(comments[0]);
-                    
-                document.getElementById('viewer').hidden = false;
-                document.getElementById('viewerTitle').innerHTML = element === 'input' && params.title ? params.title : element;
-                //document.getElementById('viewerOptions').innerHTML = '';
-                document.getElementById('viewerAddTag').hidden = (element !== 'tags');
-                document.getElementById('viewerImportTags').hidden = (element !== 'tags');
-                
-                currentElement = element;
-                currentList = listParse(element);
-                var options = "";
-
-                for (var i = 0; i < currentList.length; i++) {
-                    var presentation = optionPresent(i);
-                    var removeButton = `<button onclick='remove(${i})'>Delete</button>`;
-                    var editButton = `<button onclick='edit(${i})'>Edit</button>`;
-                    var commentButton = `<button onclick='edit(${i},true)'>Comment</button>`;
-                    var copyButton = `<button onclick='copy(${i})'>Copy</button>`;
-                    var tagButtons = "";
-                    var option = currentList[i];
-                    var style = "";
-                    var nocomment = "";
-                    
-                    for (var t = 0; t < tags.length; t++) {
-                        if (tags[t].removed || currentElement === 'tags')
-                            continue;
-                        tagButtons += `<button onclick='tag(${i},"${tags[t].text}")'>
-                            ${tags[t].text}
-                        </button>`;
-                    }
-                    
-                    for (var j in option.tags) {
-                        switch (true) {
-                            case option.tags[j].startsWith('styleflex'):
-                                style = option.tags[j].split('=').pop();
-                                break;
-                            case option.tags[j].startsWith('nocomment'):
-                                nocomment = "nocomment";
-                                break;
-                            case option.tags[j].startsWith('nobuttons'):
-                                removeButton = "", editButton = "", commentButton = "", copyButton = "", tagButtons = "";
-                                break;
-                        }
-                    }
-
-                    options += `<div class="option snap" ondblclick="containerFullscreen(${i})" id="option_${i}" style="${style}">
-                        <div class="cornerButton cornerTop gradientDark contentOnlyTrigger" onclick="containerFullscreen(${i})" alt="Maximize container"></div>
-                        <div class="optionContents ${nocomment}">
-                            <div class="optionButtons tint">
-                                ${removeButton} ${editButton} ${commentButton} ${copyButton} ${tagButtons}
-                            </div>
-                            ${presentation} 
-                        </div>
-                    </div>`;
-                }
-
-                document.getElementById('viewerOptions').innerHTML = options;
-                document.getElementById('viewer').scrollTo(0, document.getElementById('viewerOptions').offsetTop);
-                observeContainers();
-
-                try {
-                    var rect = document.getElementById('option_' + scrollToId).getBoundingClientRect();
-                    document.getElementById('viewer').scrollTo(rect.x + 1, document.getElementById('viewerOptions').offsetTop);
-                } catch (e) {
-                }
-
-            }
-            
-            function fullscreenChanged(event) {
-                if (!document.fullscreenElement) {
-                    //document.getElementById('slideshow').hidden = true;
-                    observeContainers();
-                }
-            }
-            
-            function viewerFullscreenToggle(state = undefined) {
-                if (!document.fullscreenElement || state) {
-                    document.body.requestFullscreen();
-                } else {
-                    document.exitFullscreen();
-                }
-            }
-            
-            function observeContainers() {
-                Array.prototype.forEach.call(document.getElementsByClassName("container"), (container) => {
-                    entryObserver.observe(container);
-                });
-            }
-            
-            function slideshowMenu(pause = false) {
-                slideshowPause();
-                
-                var menu = document.getElementById('slideshowMenu');
-                menu.hidden = !menu.hidden;
-                
-                if (menu.hidden && !pause) {
-                    slideshowTimeoutId = setTimeout(slideshowTransition, currentSlideDelay * 1000, 'input', currentShowId + 1);
-                    document.getElementById('slideshowMenuButton').classList.remove("light");
-                }
-                
-                try {
-                    document.getElementById('slide').firstChild.contentWindow.focus();
-                } catch (e) {
-                }
-            }
-            
-            function viewerMenu() {
-                var menu = document.getElementById('viewerMenu');
-                menu.hidden = !menu.hidden;
-            }
-            
-            function slideshowPause() {
-                clearTimeout(slideshowTimeoutId);
-                document.getElementById('slide').style.opacity = 1;
-                document.getElementById('slideshowMenuButton').classList.add("light");
-            }
-            
-            function slideshowStop(callback = false) {
-                clearTimeout(slideshowTimeoutId);
-                fadeCallback(function () {
-                    document.getElementById('slide').innerHTML = '';
-                    document.getElementById('slideshow').hidden = true;
-                    if (callback)
-                        callback();
-                }, 1, 1, params.containerShowDelay);
-            }
-            
-            function slideshowTransition(element = 'input', showId = 0, single = false) {
-                slideshowTimeoutId = setTimeout(slideshow, params.slideshowPreTransitionDelay * 1000, element, showId, single);
-                document.getElementById('slide').style.opacity = 0;
-            }
-            
-            function slideshowScroll(e) {
-                fadeCallback(function () {
-                    slideshow('input', e.deltaY >= 0 ? currentShowId + 1 : -1);
-                }, 0.1, 0.1);
-            }
-            
-            function slideshow(element = 'input', showId = 0, single = false) {
-                clearTimeout(slideshowTimeoutId);
-                closeViewer();
-                
-                document.getElementById('slideshowMenuButton').classList.remove("light");
-                document.querySelectorAll('.container').forEach(function (x) {
-                    x.remove();
-                });
-
-                currentElement = element;
-                currentList = listParse(element);
-                currentSlideDelay = params.slideshowDelay;
-
-                if (showId < 0) {
-                    showId = slideshowHistory.pop();
-                    showId = (currentShowId === showId ? slideshowHistory.pop() : showId);
-                    showId = showId ? showId : 0;
-                } else {
-                    var nextShowId = Math.floor(Math.random() * currentList.length);
-                    nextShowId = (nextShowId === slideshowHistory.slice(-1)[0] && Math.random() > 0.5) ? Math.floor(Math.random() * currentList.length) : nextShowId;
-                    showId = (params.slideshowShuffle && !single ? nextShowId : showId) % currentList.length;
-                }
-
-                var option = currentList[showId];
-
-                if (!option)
-                    return;
-
-                for (var i in option.tags) {
-                    if (option.tags[i].startsWith('noslideshow')) {
-                        return slideshow(element, showId + 1, single);
-                    }
-                    if (option.tags[i].startsWith('slideshowdelay')) {
-                        currentSlideDelay = parseInt(option.tags[i].split('=').pop());
-                    }
-                }
-
-                slideshowHistory.push(showId);
-                currentShowId = showId;
-                document.getElementById('slideLink').href = currentList[currentShowId].text;
-                
-                var presentation = optionPresent(showId, false);
-                document.getElementById('slide').innerHTML = presentation;
-                observeContainers();
-                document.getElementById('slideshow').hidden = false;
-
-                setTimeout(function () {
-                    document.getElementById('slide').style.opacity = 1;
-                }, params.containerShowDelay * 1000);
-
-                if (single || !document.getElementById('slideshowMenu').hidden)
-                    return;
-
-                slideshowTimeoutId = setTimeout(slideshowTransition, currentSlideDelay * 1000, element, showId + 1);
-            }
-            
-            function lazyLoad(visibilityEntry) {
-
-                var container = visibilityEntry.target;
-                if (!container)
-                    return;
-
-                if (isViewerScrolling()){
-                
-                	if (container.lazyLoadingTimeout){
-                		clearTimeout(container.lazyLoadingTimeout);
-                	} 
-                	
-                	container.lazyLoadingTimeout = setTimeout(()=>{lazyLoad(visibilityEntry)}, 200);
-                	return;
-                }
-                
-                if (/*visibilityEntry.intersectionRatio < 0.05 &&*/  !visibilityEntry.isIntersecting && (container.data || container.src)) {
-                    containerStop(container);
-                } 
-                if (/*visibilityEntry.intersectionRatio > 0.95 &&*/  visibilityEntry.isIntersecting && (!container.data || !container.src)) {
-                	containerStart(container);
-                }
-            }
-
-            function containerFullscreen(id) {
-                document.getElementById('containerStopButton').hidden = false;
-                var container = containerGet(id);
-                
-
-                Array.prototype.forEach.call(document.querySelectorAll(".container:not(.fullscreen)"), (x) => {
-                	if (x != container)
-	                    containerStop(x);
-                });
-                
-                containerStart(container)
-                container.classList.add("fullscreen");
-
-                try {
-                    container.contentWindow.focus();
-                } catch (e) {
-                }
-
-                entryObserver.disconnect();
-            }
-
-            function containerFullscreenStop() {
-                document.querySelectorAll('.container.fullscreen').forEach(function (element) {
-                    element.classList.remove('fullscreen');
-                });
-                
-                document.getElementById('containerStopButton').hidden = true;
-                observeContainers();
-            }
-
-            function containerGet(id) {
-                return document.querySelector(`.container[num='${id}']`);
-            }
-
-            function containerStop(container) {
-                if (!container || !container.getAttribute)
-                    return;
-                    
-                var id = container.getAttribute("num");
-                var option = currentList[id];
-                if (!option)
-                    return;
-                    
-                for (var i in option.tags) {
-                    if (option.tags[i].startsWith('nohide')) {
-                        return;
-                    }
-                }
-                container.style.minHeight = `${container.height}px`;
-                container.style.transitionProperty = 'none';
-                container.style.opacity = 0.001;
-                container.onload = undefined;
-                container.oncanplay = undefined;
-                container.src = 'about:blank';
-                container.data = 'about:blank';
-                container.removeAttribute("src");
-                container.removeAttribute("data");
-            }
-
-            function containerStart(container) {
-                if (!container || !container.getAttribute)
-                    return;
-
-                var noContent = ['about:blank', ''];
-
-                if ((container.src || container.data) && (!noContent.includes(container.src) && !noContent.includes(container.data)))
-                    return;
-
-                function bootContainer() {
-                    const orderUrlParams = this.getAttribute("data-order-params");
-                    
-                    if (orderUrlParams) {
-                        this.contentWindow.postMessage({"dataOrderParams": orderUrlParams},'*');
-                    }
-                    
-                    setTimeout(function () {
-                        try {
-                            container.style.opacity = 1;
-                        } catch (e) {
-                        }
-                    }, params.containerShowDelay * 1000);
-                }
-                
-                container.style.transitionProperty = '';
-                container.onload = bootContainer;
-                container.oncanplay = bootContainer;
-                container.data = container.getAttribute("data-src");
-                container.src = container.getAttribute("data-src");
-            }
-
-            function closeViewer() {
-                if (document.getElementById('viewer').hidden)
-                    return;
-
-                document.getElementById('viewer').hidden = true;
-                document.getElementById(currentElement).value = listStringify(currentList);
-
-                if (currentElement === 'tags') {
-                    tags = currentList;
-                }
-                updateEstimate();
-            }
-
-            function addTag() {
-                var newTag = prompt("Enter a new tag:");
-                if (!newTag)
-                    return;
-
-                currentList.push({text: newTag, comment: "", tags: []});
-                document.getElementById('tags').value = listStringify(currentList);
-                tags = currentList;
-                view('tags');
-            }
-
-            function importTags() {
-                var input = listParse('input');
-                for (var i in input) {
-                    for (var j in input[i].tags) {
-                        var newTag = {text: input[i].tags[j], comment: "", tags: []};
-                        if (!tags.some(tag => tag.text === newTag.text))
-                            tags.push(newTag);
-                    }
-                }
-                
-                document.getElementById('tags').value = listStringify(tags);
-                view('tags');
-            }
-            
-            function downloadInput(){
-                var blob = new Blob([document.getElementById("input").value], {type: "plain/text"});
-                var url = window.URL.createObjectURL(blob);
-                
-                var a = document.createElement('a');
-                a.href = url;
-                a.download = `${params.title ? params.title : 'input'}.txt`;
-                a.click();
-                
-                window.URL.revokeObjectURL(url);
-            }
-
-            function onLoad(event) {
-                console.log(event);
-                reset();
-
-                orderUrl.replace(/[#?&]+([^=&]+)=([^&]*)/gi, function (m, key, value) {
-                    if (["url", "excludeInput", "appendToInput", "prependToInput"].includes(key)) {
-                        params[key].push(decodeURIComponent(value));
-                    } else {
-                        value = decodeURIComponent(value);
-                        params[key] = parseInt(value) == value ? parseInt(value) : value;
-                    }
-                });
-
-                if (params.input) {
-                    setInput(params.input);
-                } else if (params.url.length) {
-                    setInput('');
-                }
-
-                for (var id in params.url) {
-                    inputFromUrl(params.url[id]);
-                }
-
-                onUpdate();
-            }
-
-            function onUpdate() {
-                if (params.title)
-                    document.title = params.title;
-
-                if (params.filterInput)
-                    filterInput(false, params.filterInput);
-
-                if (params.filterComment)
-                    filterInput(true, params.filterComment);
-
-                for (var id in params.excludeInput)
-                    excludeInput(params.excludeInput[id]);
-
-                for (var id in params.appendToInput)
-                    addToInput(false, params.appendToInput[id]);
-                    
-                for (var id in params.prependToInput)
-                    addToInput(true, params.prependToInput[id]);
-
-                if (params.uniqueInput)
-                    uniqueInput();
-
-                if (params.shuffleInput)
-                    shuffleInput();
-                    
+				document.getElementById('input').value = matches.join('\n');
+			}
+
+			function addToInput(prepend = false, extra = undefined) {
+				var type = "Append text to input.";
+				if (prepend) {
+					type = "Prepend text to input.";
+				}
+
+				if (!extra)
+					extra = prompt(`${type} Enter string:`);
+				if (!extra)
+					return;
+
+				currentList = listParse('input');
+
+				for (var i = 0; i < currentList.length; i++) {
+					console.log(currentList[i].text);
+					currentList[i].text = prepend ? extra + currentList[i].text : currentList[i].text + extra;
+				}
+
+				currentList = currentList.flat();
+				document.getElementById('input').value = listStringify(currentList);
+			}
+
+			function replaceInput(search = undefined, replacement = undefined) {
+				if (!search)
+					search = prompt("Replace a string:");
+				if (!search)
+					return;
+
+				if (!replacement)
+					replacement = prompt(`Replace ${search} with:`);
+				if (replacement === null)
+					return;
+
+				document.getElementById('input').value = document.getElementById('input').value.split(JSON.parse(`"${search}"`)).join(JSON.parse(`"${replacement}"`));
+			}
+
+			function excludeInput(search = undefined) {
+				if (!search)
+					search = prompt("Exclude items that contain:");
+				if (!search)
+					return;
+
+				var lines = document.getElementById('input').value.split("\n");
+				var filtered = lines.filter(function (str) {
+					return !str.toLowerCase().includes(search.toLowerCase());
+				});
+				document.getElementById('input').value = Array.from(filtered).join("\n");
+			}
+
+			function uniqueInput() {
+				var lines = document.getElementById('input').value.split("\n");
+				var uniqueLines = new Set(lines);
+
+				document.getElementById('input').value = Array.from(uniqueLines).join("\n");
+			}
+
+			function lexicInput() {
+				var lines = document.getElementById('input').value.split("\n").sort();
+				document.getElementById('input').value = lines.join("\n");
+			}
+
+			function compare(a, b) {
+				comparisons += 1;
+				setOption('A', a);
+				setOption('B', b);
+
+				return new Promise(resolve => {
+					document.getElementById('A').onclick = function () {
+						resolve(true);
+					};
+					document.getElementById('B').onclick = function () {
+						resolve(false);
+					};
+
+					document.onkeydown = function (event) {
+						switch (event.key) {
+							case "ArrowLeft":
+								resolve(true);
+								break;
+							case "ArrowRight":
+								resolve(false);
+						}
+					};
+				});
+			}
+
+			function shuffleInput() {
+				var a = listParse('input');
+				var b, c, d;
+				c = a.length;
+				while (c)
+					b = Math.random() * c-- | 0, d = a[c], a[c] = a[b], a[b] = d;
+				document.getElementById('input').value = listStringify(a);
+			}
+
+			function reverseInput() {
+				var a = listParse('input').reverse();
+				document.getElementById('input').value = listStringify(a);
+			}
+
+			function sortStart() {
+				comparisons = 0;
+				sortStartTime = Date.now();
+				document.getElementById('output').value = '';
+
+				setConsoleVisible(false);
+				setOptionsVisible(true);
+
+				currentList = listParse('input');
+				var k = Object.keys(currentList);
+
+				mergeSort(k).then(function (x) {
+					var result = `Sorted in ${comparisons} comparisons, ${Math.ceil((Date.now() - sortStartTime) / (1000 * 60))} minutes`;
+
+					document.getElementById('output').hidden = false;
+					document.getElementById('output').value = listStringify(currentList, x);
+					document.getElementById('output').value += "\n" + result;
+
+					setOptionsVisible(false);
+					setConsoleVisible(true);
+				});
+			}
+
+			function setOptionsVisible(visible = true) {
+				document.getElementById('A').hidden = !visible;
+				document.getElementById('B').hidden = !visible;
+			}
+
+			function setConsoleVisible(visible = true) {
+				document.getElementById('console').hidden = !visible;
+				setComparatorVisible(!visible);
+			}
+
+			function setComparatorVisible(visible = true) {
+				document.getElementById('hideConsoleButton').hidden = false;
+				document.getElementById('comparator').hidden = !visible;
+			}
+
+			function remove(id) {
+				currentList[id].removed = true;
+				document.getElementById("option_" + id).remove();
+			}
+
+			function copy(id) {
+				navigator.clipboard.writeText(listStringify([currentList[id]]));
+			}
+
+			function edit(id, comment=false) {
+				var input = prompt(`${comment ? "Comment" : "Input"}:`, comment ? currentList[id].comment : currentList[id].text);
+				if (input === null) {
+					return;
+				}
+
+				if (comment){
+					currentList[id].comment = input;
+					currentList[id].tags = input.split('`');
+				} else {
+					currentList[id].text = input;
+				}
+				optionUpdate(id);
+			}
+
+			function tag(id, tag) {
+				currentList[id].comment += "`" + tag;
+				currentList[id].tags.push(tag);
+				optionUpdate(id);
+			}
+
+			function listParse(element) {
+				var list = [];
+				var a = document.getElementById(element).value ? document.getElementById(element).value.split('\n') : [];
+
+				for (var i = 0; i < a.length; i++) {
+					var line = a[i].split('`');
+					list[i] = {"text": line.shift()};
+					list[i].tags = line;
+					list[i].comment = line.join("`");
+				}
+				return list;
+			}
+
+			function listStringify(list, key = null) {
+				var lines = [];
+
+				for (var i = 0; i < list.length; i++) {
+					var x = i;
+					if (key)
+						x = key[i];
+					if (list[x].removed)
+						continue;
+					var line = list[x].text + (list[x].comment ? '`' + list[x].comment : '').replace('``', '`');
+					lines.push(line);
+				}
+
+				return lines.join('\n');
+			}
+
+			function view(element = 'input', scrollToId = 0) {
+				entryObserver.disconnect();
+
+				while (document.getElementsByClassName("container")[0])
+					document.getElementsByClassName("container")[0].remove();
+
+				var comments = document.getElementsByClassName('comment');
+				while (comments.length) 
+					comments[0].parentNode.removeChild(comments[0]);
+
+				document.getElementById('viewer').hidden = false;
+				document.getElementById('viewerTitle').innerHTML = element === 'input' && params.title ? params.title : element;
+				document.getElementById('viewerAddTag').hidden = (element !== 'tags');
+				document.getElementById('viewerImportTags').hidden = (element !== 'tags');
+
+				currentElement = element;
+				currentList = listParse(element);
+				var options = "";
+
+				for (var i = 0; i < currentList.length; i++) {
+					var presentation = optionPresent(i);
+					var removeButton = `<button onclick='remove(${i})'>Delete</button>`;
+					var editButton = `<button onclick='edit(${i})'>Edit</button>`;
+					var commentButton = `<button onclick='edit(${i},true)'>Comment</button>`;
+					var copyButton = `<button onclick='copy(${i})'>Copy</button>`;
+					var tagButtons = "";
+					var option = currentList[i];
+					var style = "";
+					var nocomment = "";
+
+					for (var t = 0; t < tags.length; t++) {
+						if (tags[t].removed || currentElement === 'tags')
+							continue;
+						tagButtons += `<button onclick='tag(${i},"${tags[t].text}")'>
+							${tags[t].text}
+						</button>`;
+					}
+
+					for (var j in option.tags) {
+						switch (true) {
+							case option.tags[j].startsWith('styleflex'):
+								style = option.tags[j].split('=').pop();
+								break;
+							case option.tags[j].startsWith('nocomment'):
+								nocomment = "nocomment";
+								break;
+							case option.tags[j].startsWith('nobuttons'):
+								removeButton = "", editButton = "", commentButton = "", copyButton = "", tagButtons = "";
+								break;
+						}
+					}
+
+					options += `<div class="option snap" ondblclick="containerFullscreen(${i})" id="option_${i}" style="${style}">
+									<div class="cornerButton cornerTop gradientDark contentOnlyTrigger" onclick="containerFullscreen(${i})" alt="Maximize container"></div>
+									<div class="optionContents ${nocomment}">
+										<div class="optionButtons tint">
+											${removeButton} ${editButton} ${commentButton} ${copyButton} ${tagButtons}
+										</div>
+										${presentation} 
+									</div>
+								</div>`;
+				}
+
+				document.getElementById('viewerOptions').innerHTML = options;
+				document.getElementById('viewer').scrollTo(0, document.getElementById('viewerOptions').offsetTop);
+				observeContainers();
+
+				try {
+					var rect = document.getElementById('option_' + scrollToId).getBoundingClientRect();
+					document.getElementById('viewer').scrollTo(rect.x + 1, document.getElementById('viewerOptions').offsetTop);
+				} catch (e) {
+					console.error(e);
+				}
+
+			}
+
+			function fullscreenChanged(event) {
+				if (!document.fullscreenElement) {
+					observeContainers();
+				}
+			}
+
+			function viewerFullscreenToggle(state = undefined) {
+				if (!document.fullscreenElement || state) {
+					document.body.requestFullscreen();
+				} else {
+					document.exitFullscreen();
+				}
+			}
+
+			function observeContainers() {
+				Array.prototype.forEach.call(document.getElementsByClassName("container"), (container) => {
+					entryObserver.observe(container);
+				});
+			}
+
+			function slideshowMenu(pause = false) {
+				slideshowPause();
+
+				var menu = document.getElementById('slideshowMenu');
+				menu.hidden = !menu.hidden;
+
+				if (menu.hidden && !pause) {
+					slideshowTimeoutId = setTimeout(slideshowTransition, currentSlideDelay * 1000, 'input', currentShowId + 1);
+					document.getElementById('slideshowMenuButton').classList.remove("light");
+				}
+
+				try {
+					document.getElementById('slide').firstChild.contentWindow.focus();
+				} catch (e) {
+					console.error(e);
+				}
+			}
+
+			function viewerMenu() {
+				var menu = document.getElementById('viewerMenu');
+				menu.hidden = !menu.hidden;
+			}
+
+			function slideshowPause() {
+				clearTimeout(slideshowTimeoutId);
+				document.getElementById('slide').style.opacity = 1;
+				document.getElementById('slideshowMenuButton').classList.add("light");
+			}
+
+			function slideshowStop(callback = false) {
+				clearTimeout(slideshowTimeoutId);
+				fadeCallback(function () {
+					document.getElementById('slide').innerHTML = '';
+					document.getElementById('slideshow').hidden = true;
+					if (callback)
+						callback();
+				}, 1, 1, params.containerShowDelay);
+			}
+
+			function slideshowTransition(element = 'input', showId = 0, single = false) {
+				slideshowTimeoutId = setTimeout(slideshow, params.slideshowPreTransitionDelay * 1000, element, showId, single);
+				document.getElementById('slide').style.opacity = 0;
+			}
+
+			function slideshowScroll(e) {
+				fadeCallback(function () {
+					slideshow('input', e.deltaY >= 0 ? currentShowId + 1 : -1);
+				}, 0.1, 0.1);
+			}
+
+			function slideshow(element = 'input', showId = 0, single = false) {
+				clearTimeout(slideshowTimeoutId);
+				closeViewer();
+
+				document.getElementById('slideshowMenuButton').classList.remove("light");
+				document.querySelectorAll('.container').forEach(function (x) {
+					x.remove();
+				});
+
+				currentElement = element;
+				currentList = listParse(element);
+				currentSlideDelay = params.slideshowDelay;
+
+				if (showId < 0) {
+					showId = slideshowHistory.pop();
+					showId = (currentShowId === showId ? slideshowHistory.pop() : showId);
+					showId = showId ? showId : 0;
+				} else {
+					var nextShowId = Math.floor(Math.random() * currentList.length);
+					nextShowId = (nextShowId === slideshowHistory.slice(-1)[0] && Math.random() > 0.5) ? Math.floor(Math.random() * currentList.length) : nextShowId;
+					showId = (params.slideshowShuffle && !single ? nextShowId : showId) % currentList.length;
+				}
+
+				var option = currentList[showId];
+
+				if (!option)
+					return;
+
+				for (var i in option.tags) {
+					if (option.tags[i].startsWith('noslideshow')) {
+						return slideshow(element, showId + 1, single);
+					}
+					if (option.tags[i].startsWith('slideshowdelay')) {
+						currentSlideDelay = parseInt(option.tags[i].split('=').pop());
+					}
+				}
+
+				slideshowHistory.push(showId);
+				currentShowId = showId;
+				document.getElementById('slideLink').href = currentList[currentShowId].text;
+
+				var presentation = optionPresent(showId, false);
+				document.getElementById('slide').innerHTML = presentation;
+				observeContainers();
+				document.getElementById('slideshow').hidden = false;
+
+				setTimeout(function () {
+					document.getElementById('slide').style.opacity = 1;
+				}, params.containerShowDelay * 1000);
+
+				if (single || !document.getElementById('slideshowMenu').hidden)
+					return;
+
+				slideshowTimeoutId = setTimeout(slideshowTransition, currentSlideDelay * 1000, element, showId + 1);
+			}
+
+			function lazyLoad(visibilityEntry) {
+
+				var container = visibilityEntry.target;
+				if (!container)
+					return;
+
+				if (isViewerScrolling()){
+
+					if (container.lazyLoadingTimeout){
+						clearTimeout(container.lazyLoadingTimeout);
+					} 
+
+					container.lazyLoadingTimeout = setTimeout(()=>{lazyLoad(visibilityEntry);}, 200);
+					return;
+				}
+
+				if (!visibilityEntry.isIntersecting && (container.data || container.src)) {
+					containerStop(container);
+				} 
+				if (visibilityEntry.isIntersecting && (!container.data || !container.src)) {
+					containerStart(container);
+				}
+			}
+
+			function containerFullscreen(id) {
+				document.getElementById('containerStopButton').hidden = false;
+				var container = containerGet(id);
+
+				Array.prototype.forEach.call(document.querySelectorAll(".container:not(.fullscreen)"), (x) => {
+					if (x != container)
+						containerStop(x);
+				});
+
+				containerStart(container);
+				container.classList.add("fullscreen");
+
+				try {
+					container.contentWindow.focus();
+				} catch (e) {
+					console.error(e);
+				}
+
+				entryObserver.disconnect();
+			}
+
+			function containerFullscreenStop() {
+				document.querySelectorAll('.container.fullscreen').forEach(function (element) {
+					element.classList.remove('fullscreen');
+				});
+
+				document.getElementById('containerStopButton').hidden = true;
+				observeContainers();
+			}
+
+			function containerGet(id) {
+				return document.querySelector(`.container[num='${id}']`);
+			}
+
+			function containerStop(container) {
+				if (!container || !container.getAttribute)
+					return;
+
+				var id = container.getAttribute("num");
+				var option = currentList[id];
+				if (!option)
+					return;
+
+				for (var i in option.tags) {
+					if (option.tags[i].startsWith('nohide')) {
+						return;
+					}
+				}
+				container.style.minHeight = `${container.height}px`;
+				container.style.transitionProperty = 'none';
+				container.style.opacity = 0.001;
+				container.onload = undefined;
+				container.oncanplay = undefined;
+				container.src = 'about:blank';
+				container.data = 'about:blank';
+				container.removeAttribute("src");
+				container.removeAttribute("data");
+			}
+
+			function containerStart(container) {
+				if (!container || !container.getAttribute)
+					return;
+
+				var noContent = ['about:blank', ''];
+
+				if ((container.src || container.data) && (!noContent.includes(container.src) && !noContent.includes(container.data)))
+					return;
+
+				function bootContainer() {
+					const orderUrlParams = this.getAttribute("data-order-params");
+
+					if (orderUrlParams) {
+						this.contentWindow.postMessage({"dataOrderParams": orderUrlParams},'*');
+					}
+
+					setTimeout(function () {
+						try {
+							container.style.opacity = 1;
+						} catch (e) {
+							console.error(e);
+						}
+					}, params.containerShowDelay * 1000);
+				}
+
+				container.style.transitionProperty = '';
+				container.onload = bootContainer;
+				container.oncanplay = bootContainer;
+				container.data = container.getAttribute("data-src");
+				container.src = container.getAttribute("data-src");
+			}
+
+			function closeViewer() {
+				if (document.getElementById('viewer').hidden)
+					return;
+
+				document.getElementById('viewer').hidden = true;
+				document.getElementById(currentElement).value = listStringify(currentList);
+
+				if (currentElement === 'tags') {
+					tags = currentList;
+				}
+				updateEstimate();
+			}
+
+			function addTag() {
+				var newTag = prompt("Enter a new tag:");
+				if (!newTag)
+					return;
+
+				currentList.push({text: newTag, comment: "", tags: []});
+				document.getElementById('tags').value = listStringify(currentList);
+				tags = currentList;
+				view('tags');
+			}
+
+			function importTags() {
+				var input = listParse('input');
+				for (var i in input) {
+					for (var j in input[i].tags) {
+						var newTag = {text: input[i].tags[j], comment: "", tags: []};
+						if (!tags.some(tag => tag.text === newTag.text))
+							tags.push(newTag);
+					}
+				}
+
+				document.getElementById('tags').value = listStringify(tags);
+				view('tags');
+			}
+
+			function downloadInput(){
+				var blob = new Blob([document.getElementById("input").value], {type: "plain/text"});
+				var url = window.URL.createObjectURL(blob);
+
+				var a = document.createElement('a');
+				a.href = url;
+				a.download = `${params.title ? params.title : 'input'}.txt`;
+				a.click();
+
+				window.URL.revokeObjectURL(url);
+			}
+
+			function onLoad(event) {
+				console.log(event);
+				reset();
+
+				orderUrl.replace(/[#?&]+([^=&]+)=([^&]*)/gi, function (m, key, value) {
+					if (["url", "excludeInput", "appendToInput", "prependToInput"].includes(key)) {
+						params[key].push(decodeURIComponent(value));
+					} else {
+						value = decodeURIComponent(value);
+						params[key] = parseInt(value) == value ? parseInt(value) : value;
+					}
+				});
+
+				if (params.input) {
+					setInput(params.input);
+				} else if (params.url.length) {
+					setInput('');
+				}
+
+				for (var id in params.url) {
+					inputFromUrl(params.url[id]);
+				}
+
+				onUpdate();
+			}
+
+			function onUpdate() {
+				if (params.title)
+					document.title = params.title;
+
+				if (params.filterInput)
+					filterInput(false, params.filterInput);
+
+				if (params.filterComment)
+					filterInput(true, params.filterComment);
+
+				for (var id in params.excludeInput)
+					excludeInput(params.excludeInput[id]);
+
+				for (var id in params.appendToInput)
+					addToInput(false, params.appendToInput[id]);
+
+				for (var id in params.prependToInput)
+					addToInput(true, params.prependToInput[id]);
+
+				if (params.uniqueInput)
+					uniqueInput();
+
+				if (params.shuffleInput)
+					shuffleInput();
+
 				if (params.reverseInput)
-                    reverseInput();
+					reverseInput();
 
-                if (params.lexicInput)
-                    lexicInput();
+				if (params.lexicInput)
+					lexicInput();
 
-                if (params.importTags)
-                    importTags();
+				if (params.importTags)
+					importTags();
 
-                if (params.nested) {
-                    nestedAdjust();
-                }
-                
-                if (params.style) {
-                    document.querySelectorAll('#customStyle').forEach((x)=>x.remove());
-                    const style = document.createElement('style');
-                    style.type = 'text/css';
-                    style.id = 'customStyle';
-                    style.innerHTML = params.style;
-                    document.head.appendChild(style);
-                }
+				if (params.nested) {
+					nestedAdjust();
+				}
 
-                updateEstimate();
+				if (params.style) {
+					document.querySelectorAll('#customStyle').forEach((x)=>x.remove());
+					const style = document.createElement('style');
+					style.type = 'text/css';
+					style.id = 'customStyle';
+					style.innerHTML = params.style;
+					document.head.appendChild(style);
+				}
 
-                setViewMode(params.viewMode);
-                setGallerySize(params.gallerySize);
+				updateEstimate();
 
-                if (parseInt(params.contentOnly)) {
-                    setContentOnlyView(true);
-                }
+				setViewMode(params.viewMode);
+				setGallerySize(params.gallerySize);
 
-                
+				if (parseInt(params.contentOnly)) {
+					setContentOnlyView(true);
+				}
 
-                if (params.sortStart) {
-                    sortStart();
-                }
+				if (params.sortStart) {
+					sortStart();
+				}
 
-                if (params.slideshowStart) {
-                    clearTimeout(slideshowTimeoutId);
-                    slideshow();
-                } else if (params.viewStart) {
-                    view('input', params.viewStart - 1);
-                }
+				if (params.slideshowStart) {
+					clearTimeout(slideshowTimeoutId);
+					slideshow();
+				} else if (params.viewStart) {
+					view('input', params.viewStart - 1);
+				}
 
-                updateEstimate();
-                fadeIn(3);
-                console.log(params);
-            }
-        </script>
-        <script>
-            async function mergeSort(arr) {
-                if (arr.length < 2)
-                    return arr;
-                var mid = Math.floor(arr.length / 2);
-                var subLeft = await mergeSort(arr.slice(0, mid));
-                var subRight = await mergeSort(arr.slice(mid));
-                return merge(subLeft, subRight);
-            }
+				updateEstimate();
+				fadeIn(3);
+				console.log(params);
+			}
+		</script>
+		<script>
+			async function mergeSort(arr) {
+				if (arr.length < 2)
+					return arr;
+				var mid = Math.floor(arr.length / 2);
+				var subLeft = await mergeSort(arr.slice(0, mid));
+				var subRight = await mergeSort(arr.slice(mid));
+				return merge(subLeft, subRight);
+			}
 
-            async function merge(a, b) {
-                var result = [];
-                while (a.length > 0 && b.length > 0) {
-                    var aSmaller = await compare(a[0], b[0]);
-                    result.push(aSmaller ? a.shift() : b.shift());
-                }
-                return result.concat(a.length ? a : b);
-            }
-        </script>
-        <script>onLoad()</script>
-    </body>
+			async function merge(a, b) {
+				var result = [];
+				while (a.length > 0 && b.length > 0) {
+					var aSmaller = await compare(a[0], b[0]);
+					result.push(aSmaller ? a.shift() : b.shift());
+				}
+				return result.concat(a.length ? a : b);
+			}
+		</script>
+		<script>onLoad();</script>
+	</body>
 </html>
 <!-- Copyright (c) 2024 Nikita Korzhitskii -->
