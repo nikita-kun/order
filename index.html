@@ -2,7 +2,6 @@
 doc view style
 doc interface (button to maximize item to full window, button to minimize item, slideshow button in viewer mode, exit slideshow button, menu button)
 
-scrolling in viewer skipping bug, quirks when scrolling and snapping, prevent windows from resizing, width-height attr for object
 reset min/max height/width limits on window resize
 resizer scroller width in feed mode
 resizer tab width in horizontal mode
@@ -33,6 +32,8 @@ slow creation of options, forced reflow, optimize
 refactor, disambiguate "item", "element" in the code
 refactor css, pixel offsets
 prettify interface
+smoother scroll
+scrolling in viewer skipping bug, quirks when scrolling and snapping, prevent windows from resizing, width-height attr for object
 
 constainerStart/stop, rewrite visibility observer or polyfill
 
@@ -875,6 +876,10 @@ earliest non-supported firefox from ubuntu'12. no visibility observeer, arrow no
 							dataOrderParams = `data-order-params="${option.textReplaced.slice(option.textReplaced.indexOf('#') + 1)}"`;
 						} else {
 							dataSrc = option.textReplaced;
+						}
+						
+						if (cover){
+							dataSrc = cover;
 						}
 
 						presentation += `<${container} 
