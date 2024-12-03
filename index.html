@@ -1,4 +1,5 @@
 <!-- 
+reset styleflex on view change?
 doc view style
 doc interface (button to maximize item to full window, button to minimize item, slideshow button in viewer mode, exit slideshow button, menu button)
 
@@ -323,6 +324,9 @@ earliest non-supported firefox from ubuntu'12. no visibility observeer, arrow no
 				overflow: hidden;
 				text-overflow: ellipsis;
 			}
+			.optionLinkContainer > a{
+				text-decoration: none;
+			}
 			img.container{
 				overflow: hidden;
 				flex: 1 1 auto;
@@ -523,17 +527,16 @@ earliest non-supported firefox from ubuntu'12. no visibility observeer, arrow no
 
 		<div id='viewer' class='absolute light' hidden>
 			<div id='viewerInner'>
-				<ul id="viewerMenu" class="viewerMenu viewerScroller" hidden>
+				<ul id="viewerMenu" class="viewerMenu" hidden>
 					<h2 id="viewerTitle"></h2>
 					<li>
-						<input id='gallerySize' type='range' min=1 max=10 step=1 value=5 onchange="setGallerySize(this.value)"/>
-						<b class='modeButton' onclick="setGallerySize(2); setContentOnlyView(false); setViewMode('feed');"><svg style="transform: rotate(90deg);" viewBox="0 40 100 100" width="15px" height="15px"><path d="m5 115v-50" stroke="#000" stroke-width="7"/><path d="m45 115v-50" stroke="#000" stroke-width="7"/><path d="m85 115v-50" stroke="#000" stroke-width="7"/><path d="m125 115v-50" stroke="#000" stroke-width="7"/></svg></b>
+						<input id='gallerySize' type='range' min=1 max=10 step=0.2 value=5 onchange="setGallerySize(this.value)"/>
+						<b class='modeButton' onclick="setContentOnlyView(false); setViewMode('feed'); setGallerySize(1.2);"><svg style="transform: rotate(90deg);" viewBox="0 40 100 100" width="15px" height="15px"><path d="m5 115v-50" stroke="#000" stroke-width="7"/><path d="m45 115v-50" stroke="#000" stroke-width="7"/><path d="m85 115v-50" stroke="#000" stroke-width="7"/><path d="m125 115v-50" stroke="#000" stroke-width="7"/></svg></b>
 						<b class='modeButton' onclick="setViewMode('vertical')"><svg style="transform: rotate(90deg);" viewBox="0 20 100 100" width="15px" height="15px"><path d="m5 165v-160" stroke="#000" stroke-width="9"/><path d="m45 165v-160" stroke="#000" stroke-width="9"/><path d="m85 165v-160" stroke="#000" stroke-width="9"/><path d="m125 165v-160" stroke="#000" stroke-width="9"/></svg></b>
 						<b class='modeButton' onclick="setViewMode('horizontal')"><svg viewBox="-5 0 100 100" width="15px" height="15px"><path d="m5 165v-160" stroke="#000" stroke-width="9"/><path d="m45 165v-160" stroke="#000" stroke-width="9"/><path d="m85 165v-160" stroke="#000" stroke-width="9"/><path d="m125 165v-160" stroke="#000" stroke-width="9"/></svg></b>
 						<b class='modeButton' onclick="setViewMode('gallery')"><svg width="15px" height="15px" viewBox="-.5 -.5 171 171"><g pointer-events="all" stroke="#000"><rect width="70" height="70"/><rect x="100" width="70" height="70"/><rect y="100" width="70" height="70"/><rect x="100" y="100" width="70" height="70"/></g></svg></b>
 					</li>
 					<li class="liButton" onclick="setContentOnlyView()">Details</li>
-					<!--<li class="liButton" onclick="window.open(orderUrl, '_blank')">Duplicate window</li>-->
 					<li class="liButton" id="viewerAddTag" onclick="addTag()">Add tag</li>
 					<li class="liButton" id="viewerImportTags" onclick="importTags()">Import tags</li>
 					<li class="liButton" onclick="viewerFullscreenToggle()">Fullscreen</li>
@@ -542,9 +545,9 @@ earliest non-supported firefox from ubuntu'12. no visibility observeer, arrow no
 					<li class="liButton" onclick="closeViewer();">Main menu</li>
 				</ul>
 
-				<div id='viewerOptions' class='horizontalFlex viewerScroller'></div>
-				<div id='viewerStartSlideshowButton' class="cornerButton cornerLeft gradientLight viewerScroller" alt="Start slideshow" onclick="fadeCallback(slideshow); viewerFullscreenToggle(true);"></div>
-				<div id='viewerMenuButton' class="cornerButton gradientLight viewerScroller" alt="Viewer menu" onclick='viewerMenu()'></div>
+				<div id='viewerOptions' class='horizontalFlex'></div>
+				<div id='viewerStartSlideshowButton' class="cornerButton cornerLeft gradientLight" alt="Start slideshow" onclick="fadeCallback(slideshow); viewerFullscreenToggle(true);"></div>
+				<div id='viewerMenuButton' class="cornerButton gradientLight" alt="Viewer menu" onclick='viewerMenu()'></div>
 			</div>
 		</div>
 
@@ -659,11 +662,12 @@ earliest non-supported firefox from ubuntu'12. no visibility observeer, arrow no
 					"title": false,
 					"input": false,
 					"url": [],
+					"noCache": false,
 					"slideshowShuffle": 1,
 					"slideshowDelay": 30,
 					"slideshowPreTransitionDelay": 5,
 					"slideshowStart": false,
-					"gallerySize": 2,
+					"gallerySize": 1.2,
 					"viewMode": "feed",
 					"contentOnly": true,
 					"viewStart": false,
@@ -677,7 +681,7 @@ earliest non-supported firefox from ubuntu'12. no visibility observeer, arrow no
 					"excludeInput": [],
 					"appendToInput": [],
 					"prependToInput": [],
-					"containerShowDelay": 1,
+					"containerShowDelay": 0.5,
 					"nested": false,
 					"style": false
 				};
@@ -803,6 +807,9 @@ earliest non-supported firefox from ubuntu'12. no visibility observeer, arrow no
 						case option.tags[i].startsWith('spectrum'):
 							spectrum = true;
 							break;
+						case option.tags[i].startsWith('autoplay'):
+							autoplayArgs = 'autoplay allow="autoplay"';
+							break;
 						case option.tags[i].startsWith('noscript'):
 							sandboxArgs = sandboxArgs.filter(item => item !== 'allow-scripts');
 							break;
@@ -862,9 +869,6 @@ earliest non-supported firefox from ubuntu'12. no visibility observeer, arrow no
 						if (container === 'img') 
 							imgArgs = `onclick="containerFullscreenStop()" ondblclick="containerFullscreen(${id})"`;
 
-						if (container !== 'audio')
-							autoplayArgs = 'autoplay';
-
 						if (spectrum)
 							classes.push('spectrum');
 
@@ -891,7 +895,6 @@ earliest non-supported firefox from ubuntu'12. no visibility observeer, arrow no
 							sandbox="${sandboxArgs.join(' ')}" 
 							frameBorder="0" 
 							class="${classes.join(' ')}" 
-							allow="autoplay" 
 							loop 
 							style="${style}" 
 							data-src="${dataSrc}" ${dataOrderParams}>
@@ -926,7 +929,9 @@ earliest non-supported firefox from ubuntu'12. no visibility observeer, arrow no
 							onUpdate();
 					}
 				});
-				req.open("GET", url.startsWith('blob') || url.startsWith('file') || url.startsWith('content') || url.includes('example') ? url : url + "?" + Math.random());
+				if (!(url.startsWith('blob') || url.startsWith('file') || url.startsWith('content') || url.includes('example')))
+					url = params.noCache ? url + "?" + Math.random() : url;
+				req.open("GET", url);
 				req.send();
 			}
 
@@ -945,14 +950,16 @@ earliest non-supported firefox from ubuntu'12. no visibility observeer, arrow no
 			}
 
 			function setGallerySize(size) {
-				params.gallerySize = parseInt(size);
+				params.gallerySize = params.viewMode == "gallery" ? parseInt(size) : size;
 				document.getElementById('gallerySize').value = params.gallerySize;
 				document.getElementById('viewerOptions').style.setProperty('--gallerySize', params.gallerySize);
 			}
 
 			function setViewMode(mode) {
 				document.getElementById('viewerOptions').className = `${mode}Flex`;
+				document.getElementById('gallerySize').step = mode == "gallery" ? 1 : 0.2;
 				params.viewMode = mode;
+				setGallerySize(params.gallerySize);
 				setContentOnlyView(params.contentOnly);
 			}
 
@@ -1039,7 +1046,6 @@ earliest non-supported firefox from ubuntu'12. no visibility observeer, arrow no
 				currentList = listParse('input');
 
 				for (var i = 0; i < currentList.length; i++) {
-					console.log(currentList[i].text);
 					currentList[i].text = prepend ? extra + currentList[i].text : currentList[i].text + extra;
 				}
 
@@ -1290,7 +1296,11 @@ earliest non-supported firefox from ubuntu'12. no visibility observeer, arrow no
 				observeContainers();
 
 				try {
-					var rect = document.getElementById('option_' + scrollToId).getBoundingClientRect();
+					var option = document.getElementById('option_' + scrollToId);
+					if (!option)
+						return;
+					
+					var rect = option.getBoundingClientRect();
 					document.getElementById('viewer').scrollTo(rect.x + 1, document.getElementById('viewerOptions').offsetTop);
 				} catch (e) {
 					console.error(e);
@@ -1330,7 +1340,9 @@ earliest non-supported firefox from ubuntu'12. no visibility observeer, arrow no
 				}
 
 				try {
-					document.getElementById('slide').firstChild.contentWindow.focus();
+					var el = document.getElementById('slide > *');
+					if (el && el.contentWindow)
+						el.contentWindow.focus();
 				} catch (e) {
 					console.error(e);
 				}
@@ -1461,7 +1473,8 @@ earliest non-supported firefox from ubuntu'12. no visibility observeer, arrow no
 				container.classList.add("fullscreen");
 
 				try {
-					container.contentWindow.focus();
+					if (container.contentWindow)
+						container.contentWindow.focus();
 				} catch (e) {
 					console.error(e);
 				}
@@ -1589,8 +1602,7 @@ earliest non-supported firefox from ubuntu'12. no visibility observeer, arrow no
 				window.URL.revokeObjectURL(url);
 			}
 
-			function onLoad(event) {
-				console.log(event);
+			function onLoad() {
 				reset();
 
 				orderUrl.replace(/[#?&]+([^=&]+)=([^&]*)/gi, function (m, key, value) {
@@ -1683,7 +1695,7 @@ earliest non-supported firefox from ubuntu'12. no visibility observeer, arrow no
 				}
 
 				updateEstimate();
-				fadeIn(3);
+				fadeIn(params.containerShowDelay);
 				console.log(params);
 			}
 		</script>

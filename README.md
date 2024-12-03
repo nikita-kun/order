@@ -48,6 +48,7 @@
 * **title**: Window title
 * **input**: Text items and URLs. Newline-separated and URL-encoded
 * **url**: Load list from URL-encoded URL. Supports multiple values, `url=URL1&url=URL2`
+* **noCache**: Disable URL caching of input lists
 * **slideshowShuffle**: Shuffle items in slideshow, if true
 * **slideshowDelay**: Delay between slides in slideshow mode
 * **slideshowPreTransitionDelay**: Slide fading delay
@@ -79,6 +80,7 @@
 * **title**: Override item title
 * **link**: Override item link
 * **cover**: Override item cover
+* **autoplay**: Autoplay video or audio on appearance
 * **topnavigation**: Allow item to navigate the top window, disabled by default
 * **nocomment**: Hide item comment
 * **style**: CSS style item, `style=filter: saturate(0)`
