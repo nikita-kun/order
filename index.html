@@ -787,22 +787,22 @@ earliest non-supported firefox from ubuntu'12. no visibility observeer, arrow no
 				for (var i in option.tags) {
 					switch (true) {
 						case option.tags[i].startsWith('container='):
-							container = option.tags[i].split('=').pop();
+							container = option.tags[i].replace('container=','');
 							break;
 						case option.tags[i].startsWith('style='):
-							style = option.tags[i].split('=').pop();
+							style = option.tags[i].replace('style=','');
 							break;
 						case option.tags[i].startsWith('filename='):
-							filename = option.tags[i].split('=').pop();
+							filename = option.tags[i].replace('filename=','');
 							break;
 						case option.tags[i].startsWith('title='):
-							title = option.tags[i].split('=').pop();
+							title = option.tags[i].replace('title=','');
 							break;
 						case option.tags[i].startsWith('cover='):
-							cover = option.tags[i].split('=').pop();
+							cover = option.tags[i].replace('cover=','');
 							break;
 						case option.tags[i].startsWith('link='):
-							link = option.tags[i].split('=').pop();
+							link = option.tags[i].replace('link=','');
 							break;
 						case option.tags[i].startsWith('spectrum'):
 							spectrum = true;
