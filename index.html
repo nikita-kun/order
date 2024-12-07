@@ -1616,15 +1616,18 @@ earliest non-supported firefox from ubuntu'12. no visibility observeer, arrow no
 
 				if (params.input) {
 					setInput(params.input);
+					onUpdate();
 				} else if (params.url.length) {
 					setInput('');
+				} else {
+					onUpdate();
 				}
 
 				for (var id in params.url) {
 					inputFromUrl(params.url[id]);
 				}
-
-				onUpdate();
+				
+				
 			}
 
 			function onUpdate() {
