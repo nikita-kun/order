@@ -94,4 +94,4 @@
 * Verify URLs, they may contain arbitrary code
 
 [Source code](https://github.com/nikita-kun/order)
-Copyright (c) 2024 Nikita Korzhitskii
+Copyright (c) 2024 [Nikita Korzhitskii](https://nikita-kun.github.io/)
