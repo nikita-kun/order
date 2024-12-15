@@ -1464,7 +1464,7 @@ earliest non-supported firefox from ubuntu'12. no visibility observeer, arrow no
 				document.getElementById('containerStopButton').hidden = false;
 				var container = containerGet(id);
 
-				Array.prototype.forEach.call(document.querySelectorAll(".container[src]:not(.fullscreen), .container[data]:not(.fullscreen)"), (x) => {
+				Array.prototype.forEach.call(document.querySelectorAll(".container[src]:not(.fullscreen):not(img), .container[data]:not(.fullscreen):not(img)"), (x) => {
 					if (x != container)
 						containerStop(x);
 				});
