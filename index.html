@@ -445,12 +445,15 @@ earliest non-supported firefox from ubuntu'12. no visibility observeer, arrow no
 			#viewer{
 				z-index: 2;
 				scroll-snap-type: both mandatory;
-				overflow: hidden;
-				overflow-y: scroll;
-				overflow-x: scroll;
+				overflow-y: auto;
+				overflow-x: hidden;
 				min-height: 100vh;
 				width: 100vw;
 				scrollbar-width: none;
+			}
+			#viewer.horizontalOverflow{
+				overflow-x: auto;
+				overflow-y: hidden;
 			}
 			#viewerTitle{
 				margin: 0;
@@ -963,7 +966,7 @@ earliest non-supported firefox from ubuntu'12. no visibility observeer, arrow no
 			}
 
 			function setGallerySize(size) {
-				params.gallerySize = params.viewMode == "gallery" ? parseInt(size) : size;
+				params.gallerySize = params.viewMode == "gallery" ? Math.ceil(parseFloat(size)) : size;
 				document.getElementById('gallerySize').value = params.gallerySize;
 				document.getElementById('viewerOptions').style.setProperty('--gallerySize', params.gallerySize);
 			}
@@ -971,6 +974,10 @@ earliest non-supported firefox from ubuntu'12. no visibility observeer, arrow no
 			function setViewMode(mode) {
 				document.getElementById('viewerOptions').className = `${mode}Flex`;
 				document.getElementById('gallerySize').step = mode == "gallery" ? 1 : 0.2;
+				if (mode == 'horizontal')
+					document.getElementById('viewer').classList.add(`horizontalOverflow`);
+				else
+					document.getElementById('viewer').classList.remove(`horizontalOverflow`);
 				params.viewMode = mode;
 				setGallerySize(params.gallerySize);
 				setContentOnlyView(params.contentOnly);
