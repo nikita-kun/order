@@ -37,7 +37,7 @@
 ### Item sorting
 * [Sort numbers](https://nikita-kun.github.io/order/#sortStart=1&shuffleInput=1&viewMode=vertical&gallerySize=10&title=Sort&input=1%0A2%0A3%0A4%0A5%0A6%0A7%0A8%0A9%0A0)
 * [Sort tasks](https://nikita-kun.github.io/order/#sortStart=1&shuffleInput=1&viewMode=vertical&gallerySize=10&title=Sort&input=wash%20dishes%0Adinner%0Asleep%0Aleisure%0Awork%0Awalk)
-* [Sort photos](https://nikita-kun.github.io/order/#sortStart=1&shuffleInput=1&viewMode=vertical&gallerySize=5&title=Sort&filterComment=close&url=./intro/example-photo.txt)
+* [Sort photos](https://nikita-kun.github.io/order/#sortStart=1&shuffleInput=1&viewMode=vertical&gallerySize=3&title=Sort&filterInput=a1&url=./intro/example-photo.txt)
 
 ### Item input
 * [Main menu](https://nikita-kun.github.io/order/)
