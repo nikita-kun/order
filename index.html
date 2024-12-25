@@ -966,8 +966,8 @@ earliest non-supported firefox from ubuntu'12. no visibility observeer, arrow no
 			function inputFromUrl(url, viewOnUpdate = true) {
 				const req = new XMLHttpRequest();
 				req.addEventListener("load", function (event) {
-					if (event.srcElement.statusText === "OK" || event.srcElement.status == 200) {
-						appendInput(event.srcElement.responseText.trim());
+					if (event.target.statusText === "OK" || event.target.status == 200) {
+						appendInput(event.target.responseText.trim());
 						if (viewOnUpdate)
 							onUpdate();
 					}
@@ -1670,8 +1670,7 @@ earliest non-supported firefox from ubuntu'12. no visibility observeer, arrow no
 				for (var id in params.url) {
 					inputFromUrl(params.url[id]);
 				}
-				
-				
+
 			}
 
 			function onUpdate() {
