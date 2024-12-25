@@ -168,7 +168,6 @@ earliest non-supported firefox from ubuntu'12. no visibility observeer, arrow no
 				height: 100vh;
 			}
 			.galleryFlex > .option{
-				overflow: hidden;
 				min-width: calc(100vw / var(--gallerySize));
 				max-width: calc(100vw / var(--gallerySize));
 				min-height: calc(100vw * 9 / 16 / var(--gallerySize));
@@ -190,7 +189,6 @@ earliest non-supported firefox from ubuntu'12. no visibility observeer, arrow no
 				height: 100%;
 			}
 			.horizontalFlex > .option{
-				overflow: hidden;
 				min-width: calc(100vw / var(--gallerySize));
 				max-width: calc(100vw / var(--gallerySize));
 				min-height: 100vh;
@@ -249,6 +247,7 @@ earliest non-supported firefox from ubuntu'12. no visibility observeer, arrow no
 				max-height: 100vh;
 				user-select: none;
 				background: inherit;
+				overflow: hidden;
 			}
 			.tint {
 				background-color: #eee;
@@ -657,6 +656,34 @@ earliest non-supported firefox from ubuntu'12. no visibility observeer, arrow no
 				}, {threshold: [0.05]});
 			} catch (e) {
 				console.error(e);
+			}
+
+			if (!entryObserver){
+				entryObserver = {
+					elements : [],
+					intersectionTest : function() {
+						if (isViewerScrolling())
+							return;
+						for (const element of entryObserver.elements) {
+							const rect = element.getBoundingClientRect();
+							const event = {
+								target : element,
+								isIntersecting : rect.top <= window.innerHeight
+										&& rect.bottom >= 0
+										&& rect.left >= 0
+										&& rect.left <= window.innerWidth
+							}
+							lazyLoad(event);
+						}
+					},
+					observe : function(el){
+						entryObserver.elements.push(el);
+					},
+					disconnect : function(){
+						entryObserver.elements = [];
+					}
+				}
+				setInterval(entryObserver.intersectionTest, 1000);
 			}
 
 			function reset() {
@@ -1312,20 +1339,17 @@ earliest non-supported firefox from ubuntu'12. no visibility observeer, arrow no
 				}
 
 				document.getElementById('viewerOptions').innerHTML = options;
-				document.getElementById('viewer').scrollTo(0, document.getElementById('viewerOptions').offsetTop);
-				observeContainers();
 
 				try {
+					document.getElementById('viewer').scrollTo(0, document.getElementById('viewerOptions').offsetTop);
 					var option = document.getElementById('option_' + scrollToId);
 					if (!option)
 						return;
-					
-					var rect = option.getBoundingClientRect();
-					document.getElementById('viewer').scrollTo(rect.x + 1, document.getElementById('viewerOptions').offsetTop);
+					option.scrollIntoView();
 				} catch (e) {
 					console.error(e);
 				}
-
+				observeContainers();
 			}
 
 			function fullscreenChanged(event) {
@@ -1721,6 +1745,7 @@ earliest non-supported firefox from ubuntu'12. no visibility observeer, arrow no
 				fadeIn(params.containerShowDelay);
 				console.log(params);
 			}
+			var starting = true;
 		</script>
 		<script>
 			async function mergeSort(arr) {
@@ -1742,6 +1767,16 @@ earliest non-supported firefox from ubuntu'12. no visibility observeer, arrow no
 			}
 		</script>
 		<script>onLoad();</script>
+		<script>
+			if (typeof starting == 'undefined') {
+				try {
+					window.postMessage({"starting": "false"},'*');
+				} catch (e){
+					console.error(e);
+				}
+				window.location.href = 'intro';
+			}
+		</script>
 	</body>
 </html>
 <!-- Copyright (c) 2024 Nikita Korzhitskii -->
