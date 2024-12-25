@@ -625,7 +625,7 @@ earliest non-supported firefox from ubuntu'12. no visibility observeer, arrow no
 			var listFile = document.getElementById("list");
 
 			window.addEventListener('message', (event) => {
-				if (event.origin !== this.window.origin)
+				if (event.origin !== this.window.location.origin)
 					return;
 				if (event.data.dataOrderParams) {
 					orderUrl = "?" + "#" + event.data.dataOrderParams;
