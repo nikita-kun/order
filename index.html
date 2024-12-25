@@ -625,7 +625,7 @@ earliest non-supported firefox from ubuntu'12. no visibility observeer, arrow no
 			var listFile = document.getElementById("list");
 
 			window.addEventListener('message', (event) => {
-				if (event.origin !== this.window.location.origin)
+				if (event.origin !== window.location.origin)
 					return;
 				if (event.data.dataOrderParams) {
 					orderUrl = "?" + "#" + event.data.dataOrderParams;
@@ -1677,75 +1677,80 @@ earliest non-supported firefox from ubuntu'12. no visibility observeer, arrow no
 			}
 
 			function onUpdate() {
-				if (params.title)
-					document.title = params.title;
+				try {
+					if (params.title)
+						document.title = params.title;
 
-				if (params.filterInput)
-					filterInput(false, params.filterInput);
+					if (params.filterInput)
+						filterInput(false, params.filterInput);
 
-				if (params.filterComment)
-					filterInput(true, params.filterComment);
+					if (params.filterComment)
+						filterInput(true, params.filterComment);
 
-				for (var id in params.excludeInput)
-					excludeInput(params.excludeInput[id]);
+					for (var id in params.excludeInput)
+						excludeInput(params.excludeInput[id]);
 
-				for (var id in params.appendToInput)
-					addToInput(false, params.appendToInput[id]);
+					for (var id in params.appendToInput)
+						addToInput(false, params.appendToInput[id]);
 
-				for (var id in params.prependToInput)
-					addToInput(true, params.prependToInput[id]);
+					for (var id in params.prependToInput)
+						addToInput(true, params.prependToInput[id]);
 
-				if (params.uniqueInput)
-					uniqueInput();
+					if (params.uniqueInput)
+						uniqueInput();
 
-				if (params.shuffleInput)
-					shuffleInput();
+					if (params.shuffleInput)
+						shuffleInput();
 
-				if (params.reverseInput)
-					reverseInput();
+					if (params.reverseInput)
+						reverseInput();
 
-				if (params.lexicInput)
-					lexicInput();
+					if (params.lexicInput)
+						lexicInput();
 
-				if (params.importTags)
-					importTags();
+					if (params.importTags)
+						importTags();
 
-				if (params.nested) {
-					nestedAdjust();
+					if (params.nested) {
+						nestedAdjust();
+					}
+
+					if (params.style) {
+						document.querySelectorAll('#customStyle').forEach((x)=>x.remove());
+						const style = document.createElement('style');
+						style.type = 'text/css';
+						style.id = 'customStyle';
+						style.innerHTML = params.style;
+						document.head.appendChild(style);
+					}
+
+					updateEstimate();
+
+					setViewMode(params.viewMode);
+					setGallerySize(params.gallerySize);
+
+					if (parseInt(params.contentOnly)) {
+						setContentOnlyView(true);
+					}
+
+					if (params.sortStart) {
+						sortStart();
+					}
+
+					if (params.slideshowStart) {
+						clearTimeout(slideshowTimeoutId);
+						slideshow();
+					} else if (params.viewStart) {
+						view('input', params.viewStart - 1);
+					}
+
+					updateEstimate();
+					fadeIn(params.containerShowDelay);
+					console.log(params);
+				} catch (e){
+					console.error(e);
+					window.top.postMessage({"dataOrderException": e},'*');
 				}
-
-				if (params.style) {
-					document.querySelectorAll('#customStyle').forEach((x)=>x.remove());
-					const style = document.createElement('style');
-					style.type = 'text/css';
-					style.id = 'customStyle';
-					style.innerHTML = params.style;
-					document.head.appendChild(style);
-				}
-
-				updateEstimate();
-
-				setViewMode(params.viewMode);
-				setGallerySize(params.gallerySize);
-
-				if (parseInt(params.contentOnly)) {
-					setContentOnlyView(true);
-				}
-
-				if (params.sortStart) {
-					sortStart();
-				}
-
-				if (params.slideshowStart) {
-					clearTimeout(slideshowTimeoutId);
-					slideshow();
-				} else if (params.viewStart) {
-					view('input', params.viewStart - 1);
-				}
-
-				updateEstimate();
-				fadeIn(params.containerShowDelay);
-				console.log(params);
 			}
 			var starting = true;
 		</script>
@@ -1769,7 +1774,7 @@ earliest non-supported firefox from ubuntu'12. no visibility observeer, arrow no
 			}
 		</script>
 		<script>onLoad();</script>
-		<script>if (typeof starting == 'undefined') window.top.postMessage({"dataStarting": "false"},'*');</script>
+		<script>if (typeof starting == 'undefined') window.top.postMessage({"dataOrderException": "noscript"},'*');</script>
 		<script>if (typeof starting == 'undefined') window.location.href = 'intro';</script>
 	</body>
 </html>
