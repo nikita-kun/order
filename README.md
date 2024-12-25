@@ -31,7 +31,7 @@
 * [Slideshow](https://nikita-kun.github.io/order/#slideshowDelay=60&slideshowStart=1&viewMode=horizontal&title=Panorama&url=./intro/example-panorama.txt)
 
 ### Styling
-* [Item CSS styling and item rewriting](https://nikita-kun.github.io/order/#viewStart=1&gallerySize=2&contentOnly=0&url=./intro/example-effect.txt)
+* [Item CSS styling and item rewriting](https://nikita-kun.github.io/order/#viewStart=1&gallerySize=3&viewMode=gallery&contentOnly=0&url=./intro/example-effect.txt)
 <!-- * **custom layout example** -->
 
 ### Item sorting
