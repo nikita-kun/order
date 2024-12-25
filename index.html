@@ -1047,7 +1047,7 @@ earliest non-supported firefox from ubuntu'12. no visibility observeer, arrow no
 				if (!search)
 					return;
 
-				search = search.toLowerCase();
+				search = (search).toString().toLowerCase();
 				currentList = listParse('input');
 
 				for (var i = 0; i < currentList.length; i++) {
@@ -1057,8 +1057,9 @@ earliest non-supported firefox from ubuntu'12. no visibility observeer, arrow no
 					if (!subject.toLowerCase().includes(search))
 						delete currentList[i];
 				}
-
-				currentList = currentList.flat();
+				
+				currentList = currentList.filter((el) => el);
+				
 				document.getElementById('input').value = listStringify(currentList);
 			}
 			//incomplete, gi only
@@ -1096,7 +1097,7 @@ earliest non-supported firefox from ubuntu'12. no visibility observeer, arrow no
 					currentList[i].text = prepend ? extra + currentList[i].text : currentList[i].text + extra;
 				}
 
-				currentList = currentList.flat();
+				currentList = currentList.filter((el) => el);
 				document.getElementById('input').value = listStringify(currentList);
 			}
 
