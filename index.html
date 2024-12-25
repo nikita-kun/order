@@ -652,9 +652,10 @@ earliest non-supported firefox from ubuntu'12. no visibility observeer, arrow no
 			};
 
 			try {
-				entryObserver = new IntersectionObserver(function (entries) {
-					entries.forEach((e)=>{lazyLoad(e);});
-				}, {threshold: [0.05]});
+				if ('isIntersecting' in IntersectionObserverEntry.prototype)
+					entryObserver = new IntersectionObserver(function (entries) {
+						entries.forEach((e)=>{lazyLoad(e);});
+					}, {threshold: [0.05]});
 			} catch (e) {
 				console.error(e);
 			}
