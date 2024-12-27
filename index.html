@@ -815,6 +815,7 @@ earliest non-supported firefox from ubuntu'12. no visibility observeer, arrow no
 				var style = '';
 				var imgArgs = '';
 				var autoplayArgs = '';
+				var sandbox = '';
 				var sandboxArgs = ['allow-scripts','allow-forms','allow-same-origin','allow-pointer-lock', 'allow-popups', 'allow-downloads', 'allow-modals'];
 				var spectrum = false;
 				var flip = false;
@@ -861,6 +862,9 @@ earliest non-supported firefox from ubuntu'12. no visibility observeer, arrow no
 						case option.tags[i].startsWith('topnavigation'):
 							sandboxArgs.push('allow-top-navigation');
 							sandboxArgs.push('allow-top-navigation-by-user-activation');
+							break;
+						case option.tags[i].startsWith('nosandbox'):
+							sandboxArgs = [];
 							break;
 						case option.tags[i].startsWith('flip'):
 							flip = true;
@@ -926,10 +930,13 @@ earliest non-supported firefox from ubuntu'12. no visibility observeer, arrow no
 						} else {
 							dataSrc = option.textReplaced;
 						}
-						
+
 						if (cover){
 							dataSrc = cover;
 						}
+
+						if (sandboxArgs.length)
+							sandbox = `sandbox="${sandboxArgs.join(' ')}"`;
 
 						presentation += `<${container} 
 							id="container_${id}" 
@@ -937,7 +944,7 @@ earliest non-supported firefox from ubuntu'12. no visibility observeer, arrow no
 							${imgArgs} 
 							${autoplayArgs} 
 							allowfullscreen controls credentialless 
-							sandbox="${sandboxArgs.join(' ')}" 
+							${sandbox}
 							frameBorder="0" 
 							class="${classes.join(' ')}" 
 							loop 
