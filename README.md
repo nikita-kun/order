@@ -58,6 +58,7 @@
 * **contentOnly**: Show content of items without header and action buttons, if true
 * **viewStart**: Start viewer mode on load, if true
 * **nested**: Flip menus and buttons horizontally, useful for nested presentation
+* **style**: Additional CSS style for the whole tab
 * **filterInput**: Keep input items containing substring
 * **filterComment**: Keep input items containing comment/tag
 * **shuffleInput**: Shuffle input, if true
@@ -82,12 +83,19 @@
 * **cover**: Override item cover
 * **autoplay**: Autoplay video or audio on appearance
 * **topnavigation**: Allow item to navigate the top window, disabled by default
+* **nosandbox**: Allow the item to control the whole window, disabled by default
 * **nocomment**: Hide item comment
 * **style**: CSS style item, `style=filter: saturate(0)`
 * **styleflex**: CSS style item with details header, useful for custom layouts
 
 ## Interface
 *Click and scroll on window and tab corners!*
+* **Right bottom corner**: Menu button, contains viewer and slideshow actions
+* **Left bottom corner**: Start slideshow button
+* **Right top corner**: Expand item
+* **Left top corner**: Collapse item, exit slideshow
+* Mouse wheel on bottom buttons scrolls the view and switches slides
+* Double click on item header to expand the item
 
 ## Considerations
 * Some URLs refuse to be displayed, search for embeddable links

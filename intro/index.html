@@ -6,6 +6,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <style>body{max-width: 20cm; margin: 0 auto; padding: 3mm; font-family: system-ui;}</style>
 <link rel="icon" type="image/png" href="/favicon.png" sizes="32x32">
+<link rel="canonical" href="https://nikita-kun.github.io/order/intro/">
 </head>
 <body><h1>Order</h1>
 <ul>
@@ -74,6 +75,7 @@
 <li><strong>contentOnly</strong>: Show content of items without header and action buttons, if true</li>
 <li><strong>viewStart</strong>: Start viewer mode on load, if true</li>
 <li><strong>nested</strong>: Flip menus and buttons horizontally, useful for nested presentation</li>
+<li><strong>style</strong>: Additional CSS style for the whole tab</li>
 <li><strong>filterInput</strong>: Keep input items containing substring</li>
 <li><strong>filterComment</strong>: Keep input items containing comment/tag</li>
 <li><strong>shuffleInput</strong>: Shuffle input, if true</li>
@@ -99,12 +101,21 @@
 <li><strong>cover</strong>: Override item cover</li>
 <li><strong>autoplay</strong>: Autoplay video or audio on appearance</li>
 <li><strong>topnavigation</strong>: Allow item to navigate the top window, disabled by default</li>
+<li><strong>nosandbox</strong>: Allow the item to control the whole window, disabled by default</li>
 <li><strong>nocomment</strong>: Hide item comment</li>
 <li><strong>style</strong>: CSS style item, <code>style=filter: saturate(0)</code></li>
 <li><strong>styleflex</strong>: CSS style item with details header, useful for custom layouts</li>
 </ul>
 <h2>Interface</h2>
 <p><em>Click and scroll on window and tab corners!</em></p>
+<ul>
+<li><strong>Right bottom corner</strong>: Menu button, contains viewer and slideshow actions</li>
+<li><strong>Left bottom corner</strong>: Start slideshow button</li>
+<li><strong>Right top corner</strong>: Expand item</li>
+<li><strong>Left top corner</strong>: Collapse item, exit slideshow</li>
+<li>Mouse wheel on bottom buttons scrolls the view and switches slides</li>
+<li>Double click on item header to expand the item</li>
+</ul>
 <h2>Considerations</h2>
 <ul>
 <li>Some URLs refuse to be displayed, search for embeddable links</li>
