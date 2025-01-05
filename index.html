@@ -318,6 +318,7 @@ earliest non-supported firefox from ubuntu'12. no visibility observeer, arrow no
 			}
 			.optionDetails > a{
 				display: inline;
+				user-select: none;
 			}
 			.optionLinkContainer{
 				white-space: nowrap;
@@ -545,6 +546,7 @@ earliest non-supported firefox from ubuntu'12. no visibility observeer, arrow no
 					<li class="liButton scroller" id="viewerImportTags" onclick="importTags()">Import tags</li>
 					<li class="liButton scroller" onclick="viewerFullscreenToggle()">Fullscreen</li>
 					<li class="liButton scroller" onclick="fadeCallback(slideshow); viewerFullscreenToggle(true);">Slideshow</li>
+					<li class="liButton scroller" onclick="shuffleInput(); view();">Shuffle input</li>
 					<li class="liButton scroller" onclick="navigator.clipboard.writeText(listStringify(currentList))">Copy input</li>
 					<li class="liButton scroller" onclick="closeViewer();">Main menu</li>
 				</ul>
